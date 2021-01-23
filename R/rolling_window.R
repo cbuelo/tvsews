@@ -2,7 +2,7 @@
 #'
 #' Calculate the mean of values with optional (linear) detrending, and perform check that there's enough data
 #'
-#' @param X numeric
+#' @param x numeric
 #' @param detrend TRUE or FALSE, default = FALSE
 #' @param prop_req numeric value between 0 and 1, default = 0.99
 #'
@@ -16,18 +16,18 @@
 #' y[1] = NA
 #' Mean(y)
 #' Mean(y, prop_req = 0.5)
-Mean <- function(X, detrend = FALSE, prop_req = 0.99){
-  N = sum(!is.na(X))
-  if((N / length(X)) < prop_req){
+Mean <- function(x, detrend = FALSE, prop_req = 0.99){
+  N = sum(!is.na(x))
+  if((N / length(x)) < prop_req){
     print("Warning: more than threshold of rolling window is NA, returning NA")
     Mean = NA
   }else{
     if(detrend == TRUE){
-      x_t = 1:length(X)
-      lm_x = lm(X~x_t, na.action="na.exclude")
-      xd = residuals(lm_x)
+      x_t = 1:length(x)
+      lm_x = stats::lm(x~x_t, na.action="na.exclude")
+      xd = stats::residuals(lm_x)
     }else{
-      xd = X
+      xd = x
     }
     Mean = mean(xd, na.rm=TRUE)
   }
@@ -35,84 +35,152 @@ Mean <- function(X, detrend = FALSE, prop_req = 0.99){
 }
 
 
-# functions for calculating sd of rolling window stats
-Ar1 <-function(x, Detrend=FALSE, propReq = 0.99){
+
+#' Lag-1 autocorrelation with detrending
+#'
+#' @param x numeric
+#' @param detrend TRUE or FALSE, default = FALSE
+#' @param prop_req numeric value between 0 and 1, default = 0.99
+#'
+#' @return numeric
+#' @export
+#' @importFrom stats na.pass
+#'
+#' @examples
+#' y = rnorm(10)
+#' Ar1(y)
+#' Ar1(y, detrend = TRUE)
+#' y[1] = NA
+#' Ar1(y)
+#' Ar1(y, prop_req = 0.5)
+Ar1 <-function(x, detrend=FALSE, prop_req = 0.99){
   N = sum(!is.na(x))
-  if((N / length(x)) < propReq){
+  if((N / length(x)) < prop_req){
     print("Warning: more than threshold of rolling window is NA, returning NA")
     ac = NA
     ac_sd = NA
   }else{
-    if(Detrend == TRUE){
+    if(detrend == TRUE){
       x_t = 1:length(x)
-      lm_x = lm(x~x_t, na.action="na.exclude")
-      xd = residuals(lm_x)
+      lm_x = stats::lm(x~x_t, na.action="na.exclude")
+      xd = stats::residuals(lm_x)
     }else{
       xd = x
     }
-    ac = acf(xd, lag=1, na.action=na.pass, plot=FALSE)$acf[2]
+    ac = stats::acf(xd, lag=1, na.action=na.pass, plot=FALSE)$acf[2]
   }
   return(ac)
 }
 
-Ar1_sd <-function(x, Detrend=FALSE, propReq = 0.99){
+#' SD of lag-1 autocorrelation with detrending
+#'
+#' @param x numeric
+#' @param detrend TRUE or FALSE, default = FALSE
+#' @param prop_req numeric value between 0 and 1, default = 0.99
+#'
+#' @return numeric
+#' @export
+#' @importFrom stats na.pass
+#'
+#' @examples
+#' y = rnorm(10)
+#' Ar1_sd(y)
+#' Ar1_sd(y, detrend = TRUE)
+#' y[1] = NA
+#' Ar1_sd(y)
+#' Ar1_sd(y, prop_req = 0.5)
+Ar1_sd <-function(x, detrend=FALSE, prop_req = 0.99){
   N = sum(!is.na(x))
-  if((N / length(x)) < propReq){
-    # print("Warning: more than threshold of rolling window is NA, returning NA")
+  if((N / length(x)) < prop_req){
+    print("Warning: more than threshold of rolling window is NA, returning NA")
     ac = NA
     ac_sd = NA
   }else{
-    if(Detrend == TRUE){
+    if(detrend == TRUE){
       x_t = 1:length(x)
-      lm_x = lm(x~x_t, na.action="na.exclude")
-      xd = residuals(lm_x)
+      lm_x = stats::lm(x~x_t, na.action="na.exclude")
+      xd = stats::residuals(lm_x)
     }else{
       xd = x
     }
-    ac = acf(xd, lag=1, na.action=na.pass, plot=FALSE)$acf[2]
+    ac = stats::acf(xd, lag=1, na.action=na.pass, plot=FALSE)$acf[2]
     var_ac = ((1 - ac^2)^2)/(sum(!is.na(x)) - 3)
     ac_sd = sqrt(var_ac)
   }
   return(ac_sd)
 }
 
-SD <- function(x, Detrend=FALSE, propReq = 0.99){
+#' SD with detrending
+#'
+#' Calculate the standard deviation of values with optional (linear) detrending, and perform check that there's enough data
+#'
+#' @param x numeric
+#' @param detrend TRUE or FALSE, default = FALSE
+#' @param prop_req numeric value between 0 and 1, default = 0.99
+#'
+#' @return numeric
+#' @export
+#'
+#' @examples
+#' y = rnorm(10)
+#' SD(y)
+#' SD(y, detrend = TRUE)
+#' y[1] = NA
+#' SD(y)
+#' SD(y, prop_req = 0.5)
+SD <- function(x, detrend=FALSE, prop_req = 0.99){
   N = sum(!is.na(x))
-  if((N / length(x)) < propReq){
-    # print("Warning: more than threshold of rolling window is NA, returning NA")
+  if((N / length(x)) < prop_req){
+    print("Warning: more than threshold of rolling window is NA, returning NA")
     sd.out = NA
     sd.sd = NA
   }else{
-    if(Detrend == TRUE){
+    if(detrend == TRUE){
       x_t = 1:length(x)
-      lm_x = lm(x~x_t, na.action="na.exclude")
-      xd = residuals(lm_x)
+      lm_x = stats::lm(x~x_t, na.action="na.exclude")
+      xd = stats::residuals(lm_x)
     }else{
       xd = x
     }
     n.x = sum(!is.na(xd))
-    sd.out = sd(xd, na.rm = TRUE)
+    sd.out = stats::sd(xd, na.rm = TRUE)
   }
   return(sd.out)
 }
 
-SD_sd <- function(x, Detrend=FALSE, propReq = 0.99){
+#' SD of SD autocorrelation with detrending
+#'
+#' @param x numeric
+#' @param detrend TRUE or FALSE, default = FALSE
+#' @param prop_req numeric value between 0 and 1, default = 0.99
+#'
+#' @return numeric
+#' @export
+#'
+#' @examples
+#' y = rnorm(10)
+#' SD_sd(y)
+#' SD_sd(y, detrend = TRUE)
+#' y[1] = NA
+#' SD_sd(y)
+#' SD_sd(y, prop_req = 0.5)
+SD_sd <- function(x, detrend=FALSE, prop_req = 0.99){
   N = sum(!is.na(x))
-  if((N / length(x)) < propReq){
-    # print("Warning: more than threshold of rolling window is NA, returning NA")
+  if((N / length(x)) < prop_req){
+    print("Warning: more than threshold of rolling window is NA, returning NA")
     sd.out = NA
     sd.sd = NA
   }else{
-    if(Detrend == TRUE){
+    if(detrend == TRUE){
       x_t = 1:length(x)
-      lm_x = lm(x~x_t, na.action="na.exclude")
-      xd = residuals(lm_x)
+      lm_x = stats::lm(x~x_t, na.action="na.exclude")
+      xd = stats::residuals(lm_x)
     }else{
       xd = x
     }
     n.x = sum(!is.na(xd))
-    sd.out = sd(xd, na.rm = TRUE)
-    kurt.x = kurtosis(xd, na.rm=TRUE)
+    sd.out = stats::sd(xd, na.rm = TRUE)
+    kurt.x = moments::kurtosis(xd, na.rm=TRUE)
     var.s2 = (sd.out^4)*((2/(n.x-1)) + (kurt.x / n.x))
     var.sd = ( 1/(4*sd.out*sd.out))*var.s2
     sd.sd = sqrt(var.sd)
@@ -120,41 +188,75 @@ SD_sd <- function(x, Detrend=FALSE, propReq = 0.99){
   return(sd.sd)
 }
 
-# function that calculates all R.W. stats
-calcRollStats <- function(Data, IDcols=c("Lake", "Year"), Stats=c("Mean", "SD", "SD_sd", "CV", "Ar1", "Ar1_sd"), varCols, varsToLog=NULL, logOffset=.1, Widths=c(21), Detrend=FALSE, minProp=0.99){
-  if(!is.null(varsToLog)){
-    Data[, paste0(varsToLog, "_log10")] = NA
-    for(v in 1:length(varsToLog)){
-      minVal = min(Data[, varsToLog[v]], na.rm=TRUE)
-      if(minVal < 0){
-        addOffset = abs(minVal) + logOffset
+
+#' Calculate rolling window statistics
+#'
+#' Calculate rolling window statistics for multiple combinations of statistics, variables, rolling window widths, and detrending options.
+#'
+#' @param data data frame containing time series to calculate rolling window stats on
+#' @param var_cols character vector, variable names that are columns of *data* containing time series to calculate rolling window stats on
+#' @param id_cols character vector, two columns specifying "groups" to separate data into before calculating stats independently on, defaults are "Lake" and "Year"#'
+#' @param time_col character, column name that defines time step of data within the *id_cols* groupings
+#' @param statistics character vector, rolling window statistics to calculate, defaults to all available: c("Mean", "SD", "SD_sd", "Ar1", "Ar1_sd")
+#' @param vars_to_log character vector, optional variables names to log10 transform and create new columns before calculating rolling window stats
+#' @param log_offset positive numeric value, if any variables are being log transformed that contain negative values, all values will be shifted so that the minimum (before transformation) equals this value
+#' @param widths numeric vector, rolling window width(s) to be used, default is c(21)
+#' @param detrend TRUE or FALSE, should data within rolling windows be linearly detrended before calculating *statistics*
+#' @param min_prop numeric value between 0 and 1, proportion of data within a rolling window to calculate rolling window statistic, default 0.99
+
+#'
+#' @return a data frame with the results for the specified stats, widths, variables, etc.
+#' @export
+#'
+#' @examples
+#' rw_stats = calc_rolling_stats(data = ts_data, var_cols = c("DO_Sat"))
+calc_rolling_stats <- function(data, var_cols, id_cols=c("Lake", "Year"), time_col="DOY", statistics=c("Mean", "SD", "SD_sd", "Ar1", "Ar1_sd"), vars_to_log=NULL, log_offset=.1, widths=c(21), detrend=FALSE, min_prop=0.99){
+  if(!is.null(vars_to_log)){
+    data[, paste0(vars_to_log, "_log10")] = NA
+    for(v in 1:length(vars_to_log)){
+      min_val = min(data[, vars_to_log[v]], na.rm=TRUE)
+      if(min_val < 0){
+        add_offset = abs(min_val) + log_offset
       }else{
-        addOffset = 0
+        add_offset = 0
       }
-      print(min(c(0, abs(minVal) + logOffset)))
-      Data[, paste0(varsToLog[v], "_log10")] = log10(Data[, varsToLog[v]] + addOffset)
+      data[, paste0(vars_to_log[v], "_log10")] = log10(data[, vars_to_log[v]] + add_offset)
     }
-    varCols = c(varCols, paste0(varsToLog, "_log10"))
+    var_cols = c(var_cols, paste0(vars_to_log, "_log10"))
   }
 
-  lakeYears = unique(Data[, IDcols])
-  statsCombinations = expand.grid(Stat=Stats, Width=Widths, Detrend=Detrend, stringsAsFactors = FALSE)
-  allLY_allStats = list()
-  for(i in 1:nrow(lakeYears)){
-    ly_inds = Data[, IDcols[1]] == lakeYears[i, IDcols[1]] & Data[, IDcols[2]] == lakeYears[i, IDcols[2]]
-    ly_statsList = list()
-    for(s in 1:nrow(statsCombinations)){
-      holdResults_lys = as.data.frame(rollapplyr(data=Data[ly_inds, varCols], width=statsCombinations[s, "Width"], FUN=get(statsCombinations[s, "Stat"]), Detrend=statsCombinations[s, "Detrend"], propReq=minProp, fill=NA))
-      holdResults_lys$DOYtrunc = rollapplyr(Data[ly_inds, "DOYtrunc"], width=statsCombinations[s, "Width"], FUN=max, partial=TRUE)
-      holdResults_lys$Stat = statsCombinations[s, "Stat"]
-      holdResults_lys$Width = statsCombinations[s, "Width"]
-      ly_statsList[[s]] = holdResults_lys
+  lake_years = unique(data[, id_cols])
+  stats_combinations = expand.grid(Stat=statistics, Width=widths, Detrend=detrend, stringsAsFactors = FALSE)
+  all_lakeyear_all_stats = list()
+  for(i in 1:nrow(lake_years)){
+    ly_data = data %>%
+      dplyr::filter(!!as.symbol(id_cols[1]) == dplyr::pull(lake_years[i, id_cols[1]]) & !!as.symbol(id_cols[2]) == dplyr::pull(lake_years[i, id_cols[2]])) %>%
+      dplyr::select(dplyr::all_of(c(time_col, var_cols))) %>%
+      dplyr::arrange(dplyr::all_of(time_col))
+
+      # data[, id_cols[1]] == lake_years[i, id_cols[1]] & data[, id_cols[2]] == lake_years[i, id_cols[2]] # TODO: generalize this to work with any number of columns that need to match; include check that all columns are there
+    ly_stats_list = list()
+    for(s in 1:nrow(stats_combinations)){
+      hold_results_lys = as.data.frame(zoo::rollapplyr(data=ly_data %>% dplyr::select(dplyr::all_of(var_cols)),
+                                                 width=stats_combinations[s, "Width"],
+                                                 FUN=get(stats_combinations[s, "Stat"]),
+                                                 detrend=stats_combinations[s, "Detrend"],
+                                                 prop_req=min_prop,
+                                                 fill=NA)
+                                      )
+      hold_results_lys$DOYtrunc = zoo::rollapplyr(data=ly_data %>% dplyr::select(dplyr::all_of(time_col)),
+                                            width=stats_combinations[s, "Width"],
+                                            FUN=max,
+                                            partial=TRUE)
+      hold_results_lys$Stat = stats_combinations[s, "Stat"]
+      hold_results_lys$Width = stats_combinations[s, "Width"]
+      ly_stats_list[[s]] = hold_results_lys
     }
-    ly_allStats = rbind.fill(ly_statsList)
-    ly_allStats$Lake = lakeYears[i, "Lake"]
-    ly_allStats$Year = lakeYears[i, "Year"]
-    allLY_allStats[[i]] = ly_allStats
+    ly_all_stats = dplyr::bind_rows(ly_stats_list)
+    ly_all_stats$Lake = dplyr::pull(lake_years[i, "Lake"])
+    ly_all_stats$Year = dplyr::pull(lake_years[i, "Year"])
+    all_lakeyear_all_stats[[i]] = ly_all_stats
   }
-  out_stats = rbind.fill(allLY_allStats)
+  out_stats = dplyr::bind_rows(all_lakeyear_all_stats)
   return(out_stats)
 }
