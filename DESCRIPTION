@@ -1,11 +1,11 @@
 Package: tvsews
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Time vs. Space Early Warning Statistics
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Cal Buelo
+Maintainer: Cal Buelo <cbuelo10@gmail.com>
+Description: Comparing temporal and spatial early warning statistics (EWS)
+    Code for project and manuscript on whole-lake fertilization experiment, testing and comparing the performance of temporal and spatial early warning statistics.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
