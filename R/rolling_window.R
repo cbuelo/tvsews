@@ -232,7 +232,7 @@ calc_rolling_stats <- function(data, var_cols, id_cols=c("Lake", "Year"), time_c
     ly_data = data %>%
       dplyr::filter(!!as.symbol(id_cols[1]) == dplyr::pull(lake_years[i, id_cols[1]]) & !!as.symbol(id_cols[2]) == dplyr::pull(lake_years[i, id_cols[2]])) %>%
       dplyr::select(dplyr::all_of(c(time_col, var_cols))) %>%
-      dplyr::arrange(dplyr::all_of(time_col))
+      dplyr::arrange(!!as.symbol(time_col))
 
       # data[, id_cols[1]] == lake_years[i, id_cols[1]] & data[, id_cols[2]] == lake_years[i, id_cols[2]] # TODO: generalize this to work with any number of columns that need to match; include check that all columns are there
     ly_stats_list = list()

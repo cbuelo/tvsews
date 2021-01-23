@@ -15,4 +15,6 @@ Imports:
     moments,
     zoo,
     dplyr,
-    magrittr
+    magrittr,
+    hypergeo,
+    tidyr
