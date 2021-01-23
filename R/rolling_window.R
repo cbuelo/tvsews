@@ -1,10 +1,28 @@
-Mean <- function(X, Detrend=FALSE, propReq = 0.99){
+#' Mean with detrending
+#'
+#' Calculate the mean of values with optional (linear) detrending, and perform check that there's enough data
+#'
+#' @param X numeric
+#' @param detrend TRUE or FALSE, default = FALSE
+#' @param prop_req numeric value between 0 and 1, default = 0.99
+#'
+#' @return numeric
+#' @export
+#'
+#' @examples
+#' y = rnorm(10)
+#' Mean(y)
+#' Mean(y, detrend = TRUE)
+#' y[1] = NA
+#' Mean(y)
+#' Mean(y, prop_req = 0.5)
+Mean <- function(X, detrend = FALSE, prop_req = 0.99){
   N = sum(!is.na(X))
-  if((N / length(X)) < propReq){
+  if((N / length(X)) < prop_req){
     print("Warning: more than threshold of rolling window is NA, returning NA")
     Mean = NA
   }else{
-    if(Detrend == TRUE){
+    if(detrend == TRUE){
       x_t = 1:length(X)
       lm_x = lm(X~x_t, na.action="na.exclude")
       xd = residuals(lm_x)
