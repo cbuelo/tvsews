@@ -34,3 +34,19 @@
 #' }
 #' @source \url{Cascade research group; TODO add URL}
 "flame_data"
+
+#' Dates that experimental fertilization started and ended on, and that blooms started
+#'
+#' A dataset containing dates (Year and Day Of Year = DOY) that algal blooms started (crossed lake-specific thresholds) and that fertilizations started and ended.
+#'
+#' @format A data frame with 9 rows and 5 variables:
+#' \describe{
+#'   \item{Lake}{character indicating lake; "L" is Paul Lake, "R" is Peter Lake, "T" is Tuesday Lake}
+#'   \item{Year}{year}
+#'   \item{fertStartDOY}{"Day Of Year" or Julian day of year that nutrient additions to a lake started on}
+#'   \item{fertEndDOY}{"Day Of Year" or Julian day of year that nutrient additions to a lake ended on}
+#'   \item{bloomStartDOY}{"Day Of Year" or Julian day of year that bloom threshold was first crossed}
+#' }
+#' @source \url{Cascade research group; TODO add URL}
+"bloom_fert_dates"
+
