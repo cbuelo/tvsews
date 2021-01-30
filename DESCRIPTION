@@ -17,4 +17,5 @@ Imports:
     dplyr,
     magrittr,
     hypergeo,
-    tidyr
+    tidyr,
+    ggplot2
