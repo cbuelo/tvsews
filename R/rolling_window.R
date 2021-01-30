@@ -19,7 +19,7 @@
 Mean <- function(x, detrend = FALSE, prop_req = 0.99){
   N = sum(!is.na(x))
   if((N / length(x)) < prop_req){
-    print("Warning: more than threshold of rolling window is NA, returning NA")
+    warning("Warning: more than threshold of rolling window is NA, returning NA")
     Mean = NA
   }else{
     if(detrend == TRUE){
@@ -56,7 +56,7 @@ Mean <- function(x, detrend = FALSE, prop_req = 0.99){
 Ar1 <-function(x, detrend=FALSE, prop_req = 0.99){
   N = sum(!is.na(x))
   if((N / length(x)) < prop_req){
-    print("Warning: more than threshold of rolling window is NA, returning NA")
+    warning("Warning: more than threshold of rolling window is NA, returning NA")
     ac = NA
     ac_sd = NA
   }else{
@@ -92,7 +92,7 @@ Ar1 <-function(x, detrend=FALSE, prop_req = 0.99){
 Ar1_sd <-function(x, detrend=FALSE, prop_req = 0.99){
   N = sum(!is.na(x))
   if((N / length(x)) < prop_req){
-    print("Warning: more than threshold of rolling window is NA, returning NA")
+    warning("Warning: more than threshold of rolling window is NA, returning NA")
     ac = NA
     ac_sd = NA
   }else{
@@ -131,7 +131,7 @@ Ar1_sd <-function(x, detrend=FALSE, prop_req = 0.99){
 SD <- function(x, detrend=FALSE, prop_req = 0.99){
   N = sum(!is.na(x))
   if((N / length(x)) < prop_req){
-    print("Warning: more than threshold of rolling window is NA, returning NA")
+    warning("Warning: more than threshold of rolling window is NA, returning NA")
     sd.out = NA
     sd.sd = NA
   }else{
@@ -167,7 +167,7 @@ SD <- function(x, detrend=FALSE, prop_req = 0.99){
 SD_sd <- function(x, detrend=FALSE, prop_req = 0.99){
   N = sum(!is.na(x))
   if((N / length(x)) < prop_req){
-    print("Warning: more than threshold of rolling window is NA, returning NA")
+    warning("Warning: more than threshold of rolling window is NA, returning NA")
     sd.out = NA
     sd.sd = NA
   }else{

@@ -111,7 +111,7 @@ run_qd <- function(rolling_window_stats, var_cols, widths = c(21), stats_to_qd =
     curWidth = widths[w]
     for(v in 1:length(var_cols)){
       curVar = var_cols[v]
-      print(curVar)
+      print(paste("Current variable QD-ing:", curVar))
       indices_Stat_notNA = !is.na(rolling_window_stats_forCalcs[, paste0(curVar, "_Ar1_Lambda")])
       years = unique(rolling_window_stats_forCalcs$Year)
       for(y in 1:length(years)){
