@@ -172,8 +172,9 @@ run_qd <- function(rolling_window_stats, var_cols, widths = c(21), stats_to_qd =
 #' @param qd_stats data frame, output from \code{\link{run_qd}}
 #' @param var_cols character vector, variable names that are columns of *data* containing time series to calculate rolling window stats on
 #' @param stats character vector, statistics to format alarms for, default = c("SD", "Ar1)
-#' @param bloom_fert_df data frame of fertilization start and end dates, see \code{\link{bloom_fert_dates}} for formatting
+#' @param bloom_fert_df data frame of fertilization start and end dates, see \code{\link{bloom_fert_dates}} for default and formatting
 #' @param exp_lakes character vector, values in *Lake* column of qd_stats that correspond to experimental lakes
+#' @param just_alarm_DOYs TRUE or FALSE (default), should results be filtered to just DOYs that have an alarm (in any variable)?
 #'
 #' @return data frame with quickest detection alarm info
 #' @export
@@ -182,13 +183,19 @@ run_qd <- function(rolling_window_stats, var_cols, widths = c(21), stats_to_qd =
 #' rw_stats = calc_rolling_stats(ts_data, var_cols=c("DO_Sat"))
 #' qd_stats = run_qd(rw_stats, var_cols=c("DO_Sat"))
 #' qd_alarms = format_qd(qd_stats, var_cols=c("DO_Sat"))
-format_qd <- function(qd_stats, var_cols = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH"), stats=c("SD", "Ar1"), bloom_fert_df = bloom_fert_dates, exp_lakes = c("T", "R")){
+format_qd <- function(qd_stats, var_cols = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH"), stats=c("SD", "Ar1"), bloom_fert_df = bloom_fert_dates, exp_lakes = c("T", "R"), just_alarm_DOYs = FALSE){
   # transform QD df to make it easy to add points
   alarmCols = paste0(rep(var_cols, times=length(stats)), rep(paste0("_", stats, "_Alarm"), each = length(var_cols)))
-  inds_anyAlarm = apply(qd_stats[, alarmCols], MARGIN = 1, FUN=function(x) !all(is.na(x)) & any(x==1, na.rm=TRUE))
-  QD_long0 = as.data.frame(
-    tidyr::pivot_longer(qd_stats[inds_anyAlarm, ], cols = dplyr::starts_with(var_cols), names_to="Var_Stat", values_to = "Value")
-  )
+  if(just_alarm_DOYs == TRUE){
+    inds_anyAlarm = apply(qd_stats[, alarmCols], MARGIN = 1, FUN=function(x) !all(is.na(x)) & any(x==1, na.rm=TRUE))
+    QD_long0 = as.data.frame(
+      tidyr::pivot_longer(qd_stats[inds_anyAlarm, ], cols = dplyr::starts_with(var_cols), names_to="Var_Stat", values_to = "Value")
+    )
+  }else{
+    QD_long0 = as.data.frame(
+      tidyr::pivot_longer(qd_stats, cols = dplyr::starts_with(var_cols), names_to="Var_Stat", values_to = "Value")
+    )
+  }
 
   # separate variables and stats into separate columns
   vars_to_remove = paste(paste0(var_cols, "_"), collapse="|")
@@ -236,7 +243,7 @@ format_qd <- function(qd_stats, var_cols = c("Manual_Chl", "BGA_HYLB", "DO_Sat",
 #' Plot rolling window statistics and qd alarms
 #'
 #' @param rolling_window_stats data frame of rolling window statistics that is output from \code{\link{calc_rolling_stats}}
-#' @param qd_alarms data frame of quickest detection results, output from \code{\link{run_qd}}
+#' @param qd_alarms data frame of quickest detection alarms, output from \code{\link{format_qd}}
 #' @param var_col character vector, variable names that are columns of *data* containing time series to calculate rolling window stats on
 #' @param stats statistics to plot, default and options are c("SD", "Ar1")
 #' @param title title to put on the plot
@@ -284,4 +291,42 @@ plot_qd <- function(rolling_window_stats, qd_alarms, var_col, stats=c("SD", "Ar1
     p = p + ggtitle(title)
   }
   return(p)
+}
+
+
+#' Calculate rates of true and false alarms
+#'
+#' @param qd_alarms data frame of quickest detection alarms, output from \code{\link{format_qd}}
+#' @param bloom_fert_df data frame of fertilization start and end dates, see \code{\link{bloom_fert_dates}} for default and formatting
+#'
+#' @return data frame with true and false positive rates for combinations of variable and statistic
+#' @export
+#'
+#' @examples
+#' use_vars = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
+#' rw_stats = calc_rolling_stats(ts_data, var_cols=use_vars)
+#' qd_stats = run_qd(rw_stats, var_cols=use_vars)
+#' qd_alarms = format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
+#' calc_alarm_rates(qd_alarms)
+#'
+calc_alarm_rates <- function(qd_alarms, bloom_fert_df = bloom_fert_dates){
+  # add DOYs of fert and bloom start
+  qd_alarms_wDates = dplyr::left_join(qd_alarms, bloom_fert_df) %>%
+    dplyr::mutate(fertStartDOY = ifelse(is.na(fertStartDOY), 367, fertStartDOY)) %>%
+    dplyr::mutate(bloomStartDOY = ifelse(is.na(bloomStartDOY), 368, bloomStartDOY))
+
+  # assign DOYs to time periods
+  qd_alarms_wDates$TimePeriod = NA
+  qd_alarms_wDates = qd_alarms_wDates %>%
+    dplyr::mutate(TimePeriod = ifelse(DOYtrunc < fertStartDOY, "preFert", TimePeriod)) %>%
+    dplyr::mutate(TimePeriod = ifelse(DOYtrunc >= fertStartDOY & DOYtrunc < bloomStartDOY, "alarmPeriod", TimePeriod)) %>%
+    dplyr::mutate(TimePeriod = ifelse(DOYtrunc >= bloomStartDOY, "postBloom", TimePeriod))
+
+  # calculate rates of positive alarms
+  qd_alarm_rates = qd_alarms_wDates %>%
+    dplyr::filter(TimePeriod != "postBloom") %>%
+    dplyr::group_by(Var, Stat, TimePeriod) %>%
+    dplyr::summarise(nAlarms = sum(Alarm == 1), nDays = sum(Alarm %in% c(0,1))) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(Rate = nAlarms / nDays, PositiveType = ifelse(TimePeriod == "preFert", FALSE, TRUE))
 }

@@ -9,7 +9,8 @@ format_qd(
   var_cols = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH"),
   stats = c("SD", "Ar1"),
   bloom_fert_df = bloom_fert_dates,
-  exp_lakes = c("T", "R")
+  exp_lakes = c("T", "R"),
+  just_alarm_DOYs = FALSE
 )
 }
 \arguments{
@@ -19,9 +20,11 @@ format_qd(
 
 \item{stats}{character vector, statistics to format alarms for, default = c("SD", "Ar1)}
 
-\item{bloom_fert_df}{data frame of fertilization start and end dates, see \code{\link{bloom_fert_dates}} for formatting}
+\item{bloom_fert_df}{data frame of fertilization start and end dates, see \code{\link{bloom_fert_dates}} for default and formatting}
 
 \item{exp_lakes}{character vector, values in *Lake* column of qd_stats that correspond to experimental lakes}
+
+\item{just_alarm_DOYs}{TRUE or FALSE (default), should results be filtered to just DOYs that have an alarm (in any variable)?}
 }
 \value{
 data frame with quickest detection alarm info

@@ -237,17 +237,22 @@ calc_rolling_stats <- function(data, var_cols, id_cols=c("Lake", "Year"), time_c
       # data[, id_cols[1]] == lake_years[i, id_cols[1]] & data[, id_cols[2]] == lake_years[i, id_cols[2]] # TODO: generalize this to work with any number of columns that need to match; include check that all columns are there
     ly_stats_list = list()
     for(s in 1:nrow(stats_combinations)){
-      hold_results_lys = as.data.frame(zoo::rollapplyr(data=ly_data %>% dplyr::select(dplyr::all_of(var_cols)),
-                                                 width=stats_combinations[s, "Width"],
-                                                 FUN=get(stats_combinations[s, "Stat"]),
-                                                 detrend=stats_combinations[s, "Detrend"],
-                                                 prop_req=min_prop,
-                                                 fill=NA)
-                                      )
-      hold_results_lys$DOYtrunc = zoo::rollapplyr(data=ly_data %>% dplyr::select(dplyr::all_of(time_col)),
-                                            width=stats_combinations[s, "Width"],
-                                            FUN=max,
-                                            partial=TRUE)
+      hold_results_lys = as.data.frame(
+        zoo::rollapplyr(
+          data=ly_data %>% dplyr::select(dplyr::all_of(var_cols)) , #%>% dplyr::pull()
+          width=stats_combinations[s, "Width"],
+          FUN=get(stats_combinations[s, "Stat"]),
+          detrend=stats_combinations[s, "Detrend"],
+          prop_req=min_prop,
+          fill=NA
+        )
+      )
+      hold_results_lys$DOYtrunc = zoo::rollapplyr(
+        data=ly_data %>% dplyr::select(dplyr::all_of(time_col)) %>% dplyr::pull(),
+        width=stats_combinations[s, "Width"],
+        FUN=max,
+        partial=TRUE
+        )
       hold_results_lys$Stat = stats_combinations[s, "Stat"]
       hold_results_lys$Width = stats_combinations[s, "Width"]
       ly_stats_list[[s]] = hold_results_lys

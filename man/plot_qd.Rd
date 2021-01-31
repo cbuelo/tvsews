@@ -18,7 +18,7 @@ plot_qd(
 \arguments{
 \item{rolling_window_stats}{data frame of rolling window statistics that is output from \code{\link{calc_rolling_stats}}}
 
-\item{qd_alarms}{data frame of quickest detection results, output from \code{\link{run_qd}}}
+\item{qd_alarms}{data frame of quickest detection alarms, output from \code{\link{format_qd}}}
 
 \item{var_col}{character vector, variable names that are columns of *data* containing time series to calculate rolling window stats on}
 
