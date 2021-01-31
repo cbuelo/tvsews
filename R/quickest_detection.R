@@ -22,7 +22,7 @@ f_corr_coef <- function(r, rho, N){
 #' Quickest Detection calculation
 #'
 #' @param rolling_window_stats data frame of rolling window statistics that is output from \code{\link{calc_rolling_stats}}
-#' @param var_cols character vector, variable names that are columns of *data* containing time series to calculate rolling window stats on
+#' @param var_cols character vector, variable names that are columns of *data* containing time series to calculate quickest detection stats on
 #' @param widths numeric vector, rolling window width(s) to be used, default is c(21)
 #' @param stats_to_qd character vector, rolling window statistics to run quickest detection method on, defaults to all available: c("sd", "Ar1")
 #' @param A_adj numeric, the threshold in the S-R statistic at which an alarm is triggered
@@ -36,7 +36,7 @@ f_corr_coef <- function(r, rho, N){
 #' @examples
 #' rw_stats = calc_rolling_stats(ts_data, var_cols=c("DO_Sat"))
 #' qd_stats = run_qd(rw_stats, var_cols=c("DO_Sat"))
-run_qd <- function(rolling_window_stats, var_cols, widths = c(21), stats_to_qd = c("SD", "Ar1"), A_adj = 1E7, exp_lakes = "R", ref_lake="L", ar1_alarm_rho = 0.95){
+run_qd <- function(rolling_window_stats, var_cols, widths = c(21), stats_to_qd = c("SD", "Ar1"), A_adj = 1E7, exp_lakes = c("R", "T"), ref_lake="L", ar1_alarm_rho = 0.95){
 
   # QD data frame setup
   stats_to_qd_completed = c(stats_to_qd, paste0(stats_to_qd, "_sd"))
@@ -167,14 +167,78 @@ run_qd <- function(rolling_window_stats, var_cols, widths = c(21), stats_to_qd =
 }
 
 
+#' Format quickest detection results for plotting
+#'
+#' @param qd_stats data frame, output from \code{\link{run_qd}}
+#' @param var_cols character vector, variable names that are columns of *data* containing time series to calculate rolling window stats on
+#' @param stats character vector, statistics to format alarms for, default = c("SD", "Ar1)
+#' @param bloom_fert_df data frame of fertilization start and end dates, see \code{\link{bloom_fert_dates}} for formatting
+#' @param exp_lakes character vector, values in *Lake* column of qd_stats that correspond to experimental lakes
+#'
+#' @return data frame with quickest detection alarm info
+#' @export
+#'
+#' @examples
+#' rw_stats = calc_rolling_stats(ts_data, var_cols=c("DO_Sat"))
+#' qd_stats = run_qd(rw_stats, var_cols=c("DO_Sat"))
+#' qd_alarms = format_qd(qd_stats, var_cols=c("DO_Sat"))
+format_qd <- function(qd_stats, var_cols = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH"), stats=c("SD", "Ar1"), bloom_fert_df = bloom_fert_dates, exp_lakes = c("T", "R")){
+  # transform QD df to make it easy to add points
+  alarmCols = paste0(rep(var_cols, times=length(stats)), rep(paste0("_", stats, "_Alarm"), each = length(var_cols)))
+  inds_anyAlarm = apply(qd_stats[, alarmCols], MARGIN = 1, FUN=function(x) !all(is.na(x)) & any(x==1, na.rm=TRUE))
+  QD_long0 = as.data.frame(
+    tidyr::pivot_longer(qd_stats[inds_anyAlarm, ], cols = dplyr::starts_with(var_cols), names_to="Var_Stat", values_to = "Value")
+  )
+
+  # separate variables and stats into separate columns
+  vars_to_remove = paste(paste0(var_cols, "_"), collapse="|")
+  QD_long0 = QD_long0 %>%
+    dplyr::mutate(Stat = gsub(pattern=vars_to_remove, replacement="", x = .data$Var_Stat))
+  stats_to_remove = paste(paste0("_", unique(QD_long0$Stat)), collapse="|")
+  QD_long0 = QD_long0 %>%
+    dplyr::mutate(Var = gsub(pattern=stats_to_remove, replacement="", x = .data$Var_Stat))
+
+  # pull out just the stats we want for plotting
+  QD_long = QD_long0[QD_long0[, "Stat"] %in% c(paste0(stats, "_Exp"), paste0(stats, "_Alarm")), c("Year", "Lake", "DOYtrunc", "Width", "Var", "Stat", "Value")]
+  Alarms = QD_long[grep(pattern="Alarm", QD_long$Stat) & !is.na(QD_long[, "Value"]) & QD_long[, "Value"] %in% c(0,1), ]
+  Alarms[, "Stat"] = gsub(pattern="_Alarm", replacement="", x=Alarms[, "Stat"])
+  colnames(Alarms)[colnames(Alarms) == "Value"] = "Alarm"
+  statsAll = QD_long[QD_long[, "Stat"] %in% paste0(stats, "_Exp"), ]
+  statsAll[, "Stat"] = gsub(pattern="_Exp", replacement="", x=statsAll[, "Stat"])
+
+  # combine stats and alarms
+  statsAlarms = dplyr::full_join(statsAll, Alarms)
+  statsAlarms$Stat = factor(statsAlarms$Stat, levels=stats)
+
+  # classify alarms
+  statsAlarms = dplyr::left_join(statsAlarms, bloom_fert_df)
+  statsAlarms = statsAlarms %>%
+    dplyr::mutate(fertStartDOY = ifelse(is.na(fertStartDOY), 367, fertStartDOY)) %>%
+    dplyr::mutate(bloomStartDOY = ifelse(is.na(bloomStartDOY), 368, bloomStartDOY))
+
+  statsAlarms$AlarmType = "NA"
+  statsAlarms = statsAlarms %>%
+    dplyr:: mutate(AlarmType = ifelse(DOYtrunc < fertStartDOY & !is.na(Alarm) & Alarm == 1, "False", AlarmType)) %>%
+    dplyr::mutate(AlarmType = ifelse(DOYtrunc >= fertStartDOY & DOYtrunc < bloomStartDOY & !is.na(Alarm) & Alarm == 1, "True", AlarmType)) %>%
+    dplyr::mutate(AlarmType = ifelse(DOYtrunc >= bloomStartDOY & !is.na(Alarm) & Alarm == 1, "Late", AlarmType))
+
+  statsAlarms$AlarmType = factor(statsAlarms$AlarmType, levels = c("False", "True", "Late"), ordered=TRUE)
+
+  statsAlarms_out = statsAlarms %>%
+    dplyr::filter(!is.na(Value) & !is.na(Alarm)) %>%
+    dplyr::select(-c(fertStartDOY, fertEndDOY, bloomStartDOY))
+
+  return(statsAlarms_out)
+}
 
 
-#' title
+
+#' Plot rolling window statistics and qd alarms
 #'
 #' @param rolling_window_stats data frame of rolling window statistics that is output from \code{\link{calc_rolling_stats}}
-#' @param qd_stats data frame of quickest detection results, output from \code{\link{run_qd}}
+#' @param qd_alarms data frame of quickest detection results, output from \code{\link{run_qd}}
 #' @param var_col character vector, variable names that are columns of *data* containing time series to calculate rolling window stats on
-#' @param stats statistics to plot, default and options are c("mean", "SD", "Ar1")
+#' @param stats statistics to plot, default and options are c("SD", "Ar1")
 #' @param title title to put on the plot
 #' @param widths numeric vector, rolling window width(s) to be used, default is c(21)
 #' @param plot_bloom_lines TRUE or FALSE (default), should lines for the bloom dates be plotted?
@@ -189,35 +253,31 @@ run_qd <- function(rolling_window_stats, var_cols, widths = c(21), stats_to_qd =
 #' use_vars = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
 #' rw_stats = calc_rolling_stats(ts_data, var_cols=use_vars)
 #' qd_stats = run_qd(rw_stats, var_cols=use_vars)
-#' plot_qd(rw_stats, qd_stats, use_vars[1], stats = c("SD", "Ar1"))
-plot_qd <- function(rolling_window_stats, qd_stats, var_col, stats=c("mean", "SD", "Ar1"), title="R.W. width = 21", widths=c(21), plot_bloom_lines = FALSE, bloom_dates){
-  # transform QD df to make it easy to add points
-  alarmCols = paste0(var_col, c("_Ar1_Alarm", "_SD_Alarm"))
-  inds_anyAlarm = apply(qd_stats[, alarmCols], MARGIN = 1, FUN=function(x) !all(is.na(x)) & any(x==1, na.rm=TRUE))
-  QD_long0 = as.data.frame(
-    tidyr::pivot_longer(qd_stats[inds_anyAlarm & qd_stats$Width %in% widths, ], cols = dplyr::starts_with(var_col), names_prefix = var_col, names_to="Stat", values_to = var_col)
-    )
-  QD_long0[, "Stat"] = sub(pattern="_", replacement="", x=QD_long0[, "Stat"])
-  QD_long = QD_long0[QD_long0[, "Stat"] %in% c(paste0(stats, "_Exp"), paste0(stats, "_Alarm")), c("Year", "Lake", "DOYtrunc", "Width", "Stat", var_col)]
-  Alarms = QD_long[grep(pattern="Alarm", QD_long$Stat) & QD_long[, var_col] == 1, ]
-  Alarms[, "Stat"] = gsub(pattern="_Alarm", replacement="", x=Alarms[, "Stat"])
-  colnames(Alarms)[colnames(Alarms) == var_col] = "Alarm"
-  statsAll = QD_long[QD_long[, "Stat"] %in% paste0(stats, "_Exp"), ]
-  statsAll[, "Stat"] = gsub(pattern="_Exp", replacement="", x=statsAll[, "Stat"])
-  # print(head(Alarms))
+#' qd_alarms = format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
+#' plot_qd(rw_stats, qd_alarms, use_vars[1], stats = c("SD", "Ar1"),
+#'    plot_bloom_lines = TRUE, bloom_dates = bloom_fert_dates)
+plot_qd <- function(rolling_window_stats, qd_alarms, var_col, stats=c("SD", "Ar1"), title="R.W. width = 21", widths=c(21), plot_bloom_lines = FALSE, bloom_dates){
 
-  statsAlarms = merge(Alarms, statsAll)
-  statsAlarms$Stat = factor(statsAlarms$Stat, levels=stats)
+  # get just the alarms
+  statsAlarms = qd_alarms %>%
+    dplyr::filter(!is.na(Alarm) & Alarm == 1 & Var == var_col)
+
+
   # add the points
   p = ggplot(rolling_window_stats[rolling_window_stats$Stat %in% stats & rolling_window_stats$Width %in% widths, ], aes(x=DOYtrunc, y=get(var_col), color=Lake)) +
-    facet_grid(cols=vars(Year), rows=vars(Stat), scales="free_y") + geom_line() +
-    geom_point(data=statsAlarms, aes(x=DOYtrunc, y=get(var_col), color=Lake)) +
+    facet_grid(cols=vars(Year), rows=vars(Stat), scales="free_y") +
+    geom_line(size=1.25) +
+    geom_point(data=statsAlarms, mapping=aes(x=DOYtrunc, y=Value, color=Lake, fill=AlarmType), shape=21, size=3, color="black") + # , fill="red", color="black"
+    scale_fill_manual(values = c("#FFE77AFF", "#5F9260FF", "darkgrey")) +
+    # geom_point(data=statsAlarms, aes(x=DOYtrunc, y=Value, color=Lake), size = 2) +
     theme_bw(base_size=16) + labs(y=var_col, x="Day of Year")
   if(length(unique(rolling_window_stats$Lake)) == 2){
     p = p + scale_color_manual(values=c("dodgerblue", "orangered3"))
+  }else if(length(unique(rolling_window_stats$Lake)) == 3){
+    p = p + scale_color_manual(values=c("dodgerblue", "orangered3", "grey10"))
   }
   if(plot_bloom_lines){
-    p = p + geom_vline(data = bloom_dates, aes(xintercept=bloomStartDOY, color=Lake), linetype="dashed") +
+    p = p + geom_vline(data = bloom_dates, aes(xintercept=bloomStartDOY, color=Lake), linetype="solid") +
       geom_vline(data = bloom_dates, aes(xintercept=fertStartDOY), color="black", linetype="dashed")
   }
   if(!is.na(title)){

@@ -10,7 +10,7 @@ run_qd(
   widths = c(21),
   stats_to_qd = c("SD", "Ar1"),
   A_adj = 1e+07,
-  exp_lakes = "R",
+  exp_lakes = c("R", "T"),
   ref_lake = "L",
   ar1_alarm_rho = 0.95
 )
@@ -18,7 +18,7 @@ run_qd(
 \arguments{
 \item{rolling_window_stats}{data frame of rolling window statistics that is output from \code{\link{calc_rolling_stats}}}
 
-\item{var_cols}{character vector, variable names that are columns of *data* containing time series to calculate rolling window stats on}
+\item{var_cols}{character vector, variable names that are columns of *data* containing time series to calculate quickest detection stats on}
 
 \item{widths}{numeric vector, rolling window width(s) to be used, default is c(21)}
 

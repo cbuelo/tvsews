@@ -2,13 +2,13 @@
 % Please edit documentation in R/quickest_detection.R
 \name{plot_qd}
 \alias{plot_qd}
-\title{title}
+\title{Plot rolling window statistics and qd alarms}
 \usage{
 plot_qd(
   rolling_window_stats,
-  qd_stats,
+  qd_alarms,
   var_col,
-  stats = c("mean", "SD", "Ar1"),
+  stats = c("SD", "Ar1"),
   title = "R.W. width = 21",
   widths = c(21),
   plot_bloom_lines = FALSE,
@@ -18,11 +18,11 @@ plot_qd(
 \arguments{
 \item{rolling_window_stats}{data frame of rolling window statistics that is output from \code{\link{calc_rolling_stats}}}
 
-\item{qd_stats}{data frame of quickest detection results, output from \code{\link{run_qd}}}
+\item{qd_alarms}{data frame of quickest detection results, output from \code{\link{run_qd}}}
 
 \item{var_col}{character vector, variable names that are columns of *data* containing time series to calculate rolling window stats on}
 
-\item{stats}{statistics to plot, default and options are c("mean", "SD", "Ar1")}
+\item{stats}{statistics to plot, default and options are c("SD", "Ar1")}
 
 \item{title}{title to put on the plot}
 
@@ -36,11 +36,13 @@ plot_qd(
 a ggplot object
 }
 \description{
-title
+Plot rolling window statistics and qd alarms
 }
 \examples{
 use_vars = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
 rw_stats = calc_rolling_stats(ts_data, var_cols=use_vars)
 qd_stats = run_qd(rw_stats, var_cols=use_vars)
-plot_qd(rw_stats, qd_stats, use_vars[1], stats = c("SD", "Ar1"))
+qd_alarms = format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
+plot_qd(rw_stats, qd_alarms, use_vars[1], stats = c("SD", "Ar1"),
+   plot_bloom_lines = TRUE, bloom_dates = bloom_fert_dates)
 }
