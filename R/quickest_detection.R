@@ -329,4 +329,6 @@ calc_alarm_rates <- function(qd_alarms, bloom_fert_df = bloom_fert_dates){
     dplyr::summarise(nAlarms = sum(Alarm == 1), nDays = sum(Alarm %in% c(0,1))) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(Rate = nAlarms / nDays, PositiveType = ifelse(TimePeriod == "preFert", FALSE, TRUE))
+
+  return(qd_alarm_rates)
 }
