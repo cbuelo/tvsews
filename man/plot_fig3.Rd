@@ -18,6 +18,8 @@ plot_fig3(
 \item{qd_alarms}{data frame, output from call to}
 
 \item{bloom_dates}{data frame, formatted as}
+
+\item{rename_vec}{named vector, used to change variable names displayed in plot, format is c("new name" = "original name")}
 }
 \value{
 ggplot object showing rolling window statistics and quickest detection alarms

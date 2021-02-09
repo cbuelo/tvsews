@@ -3,6 +3,7 @@
 #' @param rolling_window_stats data frame, output from call to
 #' @param qd_alarms data frame, output from call to
 #' @param bloom_dates data frame, formatted as
+#' @param rename_vec named vector, used to change variable names displayed in plot, format is c("new name" = "original name")
 #'
 #' @return ggplot object showing rolling window statistics and quickest detection alarms
 #' @import ggplot2
