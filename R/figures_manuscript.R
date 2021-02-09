@@ -99,7 +99,8 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df, rename_vec
 #'
 #' @param qd_alarm_rates data frame, output from call to \code{\link{calc_alarm_rates}}
 #' @param rename_vec named vector, used to change variable names displayed in plot, format is c("new name" = "original name")
-#' @param Ylim numeric vector of length 2, optionally specify y limits manually
+#' @param y_lim numeric vector of length 2, optionally specify y limits manually
+#' @param title character string, optional main title for plot
 #'
 #' @return ggplot2 object, bar plot giving the true and false positive rates
 #' @export
@@ -114,7 +115,7 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df, rename_vec
 #' qd_alarms = format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
 #' qd_rates = calc_alarm_rates(qd_alarms)
 #' plot_fig5(qd_alarm_rates = qd_rates)
-plot_fig5 <- function(qd_alarm_rates, rename_vec = c("Chl-a" = "Manual_Chl", "BGA" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), Ylim=NULL){
+plot_fig5 <- function(qd_alarm_rates, rename_vec = c("Chl-a" = "Manual_Chl", "BGA" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), y_lim=NULL, title=NULL){
   # format data
   rename_vec_rev = names(rename_vec)
   names(rename_vec_rev) = unname(rename_vec)
@@ -134,8 +135,12 @@ plot_fig5 <- function(qd_alarm_rates, rename_vec = c("Chl-a" = "Manual_Chl", "BG
           legend.background = element_blank(),
           legend.key = element_blank(),
           strip.text = element_text(size=18))
-  if(!is.null(Ylim)){
-    out_plot = out_plot + lims(y = Ylim)
+  if(!is.null(y_lim)){
+    out_plot = out_plot + lims(y = y_lim)
+  }
+  if(!is.null(title)){
+    out_plot = out_plot +
+      ggtitle(title)
   }
   return(out_plot)
 }

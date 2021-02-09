@@ -8,7 +8,8 @@ plot_fig5(
   qd_alarm_rates,
   rename_vec = c(`Chl-a` = "Manual_Chl", BGA = "BGA_HYLB", `D.O. sat.` = "DO_Sat", pH =
     "pH"),
-  Ylim = NULL
+  y_lim = NULL,
+  title = NULL
 )
 }
 \arguments{
@@ -16,7 +17,9 @@ plot_fig5(
 
 \item{rename_vec}{named vector, used to change variable names displayed in plot, format is c("new name" = "original name")}
 
-\item{Ylim}{numeric vector of length 2, optionally specify y limits manually}
+\item{y_lim}{numeric vector of length 2, optionally specify y limits manually}
+
+\item{title}{character string, optional main title for plot}
 }
 \value{
 ggplot2 object, bar plot giving the true and false positive rates
