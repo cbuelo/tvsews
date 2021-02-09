@@ -18,4 +18,5 @@ Imports:
     magrittr,
     hypergeo,
     tidyr,
-    ggplot2
+    ggplot2,
+    gridExtra
