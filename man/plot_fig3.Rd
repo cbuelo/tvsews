@@ -7,17 +7,17 @@
 plot_fig3(
   rolling_window_stats,
   qd_alarms,
-  bloom_dates,
+  bloom_fert_df,
   rename_vec = c(`Chl-a` = "Manual_Chl", BGA = "BGA_HYLB", `D.O. sat.` = "DO_Sat", pH =
     "pH")
 )
 }
 \arguments{
-\item{rolling_window_stats}{data frame, output from call to}
+\item{rolling_window_stats}{data frame, output from call to \code{\link{calc_rolling_stats}}}
 
-\item{qd_alarms}{data frame, output from call to}
+\item{qd_alarms}{data frame, output from call to \code{\link{format_qd}}}
 
-\item{bloom_dates}{data frame, formatted as}
+\item{bloom_fert_df}{data frame of fertilization start and end dates, see \code{\link{bloom_fert_dates}} for default and formatting}
 
 \item{rename_vec}{named vector, used to change variable names displayed in plot, format is c("new name" = "original name")}
 }
@@ -32,5 +32,5 @@ use_vars = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
 rw_stats = calc_rolling_stats(ts_data, var_cols=use_vars)
 qd_s = run_qd(rw_stats, var_cols=use_vars)
 qd_a = format_qd(qd_s, bloom_fert_df = bloom_fert_dates)
-plot_fig3(rolling_window_stats = rw_stats, qd_alarms = qd_a, bloom_dates = bloom_fert_dates)
+plot_fig3(rolling_window_stats = rw_stats, qd_alarms = qd_a, bloom_fert_df = bloom_fert_dates)
 }

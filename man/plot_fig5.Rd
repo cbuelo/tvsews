@@ -4,17 +4,32 @@
 \alias{plot_fig5}
 \title{Plot true and false positive quickest detection alarm rates}
 \usage{
-plot_fig5(qd_alarm_rates)
+plot_fig5(
+  qd_alarm_rates,
+  rename_vec = c(`Chl-a` = "Manual_Chl", BGA = "BGA_HYLB", `D.O. sat.` = "DO_Sat", pH =
+    "pH"),
+  Ylim = NULL
+)
 }
 \arguments{
-\item{qd_alarm_rates}{data frame, output from call to}
+\item{qd_alarm_rates}{data frame, output from call to \code{\link{calc_alarm_rates}}}
+
+\item{rename_vec}{named vector, used to change variable names displayed in plot, format is c("new name" = "original name")}
+
+\item{Ylim}{numeric vector of length 2, optionally specify y limits manually}
 }
 \value{
-
+ggplot2 object, bar plot giving the true and false positive rates
 }
 \description{
 Plot true and false positive quickest detection alarm rates
 }
 \examples{
-# need to add
+use_vars = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
+rw_data = ts_data \%>\% dplyr::filter(Year >= 2011)
+rw_stats = calc_rolling_stats(rw_data, var_cols=use_vars)
+qd_stats = run_qd(rw_stats, var_cols=use_vars)
+qd_alarms = format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
+qd_rates = calc_alarm_rates(qd_alarms)
+plot_fig5(qd_alarm_rates = qd_rates)
 }

@@ -1,8 +1,8 @@
 #' Plot rolling window stats and quickest detection alarms for all variables
 #'
-#' @param rolling_window_stats data frame, output from call to
-#' @param qd_alarms data frame, output from call to
-#' @param bloom_dates data frame, formatted as
+#' @param rolling_window_stats data frame, output from call to \code{\link{calc_rolling_stats}}
+#' @param qd_alarms data frame, output from call to \code{\link{format_qd}}
+#' @param bloom_fert_df data frame of fertilization start and end dates, see \code{\link{bloom_fert_dates}} for default and formatting
 #' @param rename_vec named vector, used to change variable names displayed in plot, format is c("new name" = "original name")
 #'
 #' @return ggplot object showing rolling window statistics and quickest detection alarms
@@ -15,8 +15,8 @@
 #' rw_stats = calc_rolling_stats(ts_data, var_cols=use_vars)
 #' qd_s = run_qd(rw_stats, var_cols=use_vars)
 #' qd_a = format_qd(qd_s, bloom_fert_df = bloom_fert_dates)
-#' plot_fig3(rolling_window_stats = rw_stats, qd_alarms = qd_a, bloom_dates = bloom_fert_dates)
-plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_dates, rename_vec = c("Chl-a" = "Manual_Chl", "BGA" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH")){
+#' plot_fig3(rolling_window_stats = rw_stats, qd_alarms = qd_a, bloom_fert_df = bloom_fert_dates)
+plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df, rename_vec = c("Chl-a" = "Manual_Chl", "BGA" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH")){
   # rename variables
   rolling_window_stats = rolling_window_stats %>% rename(!!!rename_vec)
   # pivot long for plotting
@@ -25,7 +25,7 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_dates, rename_vec =
     tidyr::pivot_longer(cols = names(rename_vec), names_to = "Variable", values_to = "Value") %>%
     mutate(Variable = factor(.data$Variable, levels = c("Chl-a", "BGA", "D.O. sat.", "pH"), ordered = TRUE))
   # just get the Peter bloom dates for the experiment
-  bloom_dates_peter = bloom_dates %>%
+  bloom_dates_peter = bloom_fert_df %>%
     filter(Lake == "R" & Year >= 2018) %>%
     tidyr::pivot_longer(cols = c("fertStartDOY", "fertEndDOY", "bloomStartDOY"), names_to = "Start Of", values_to = "DOYtrunc") %>%
     mutate(
@@ -97,13 +97,45 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_dates, rename_vec =
 
 #' Plot true and false positive quickest detection alarm rates
 #'
-#' @param qd_alarm_rates data frame, output from call to
+#' @param qd_alarm_rates data frame, output from call to \code{\link{calc_alarm_rates}}
+#' @param rename_vec named vector, used to change variable names displayed in plot, format is c("new name" = "original name")
+#' @param Ylim numeric vector of length 2, optionally specify y limits manually
 #'
-#' @return
+#' @return ggplot2 object, bar plot giving the true and false positive rates
 #' @export
+#' @import dplyr
+#' @import ggplot2
 #'
 #' @examples
-#' # need to add
-plot_fig5 <- function(qd_alarm_rates){
+#' use_vars = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
+#' rw_data = ts_data %>% dplyr::filter(Year >= 2011)
+#' rw_stats = calc_rolling_stats(rw_data, var_cols=use_vars)
+#' qd_stats = run_qd(rw_stats, var_cols=use_vars)
+#' qd_alarms = format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
+#' qd_rates = calc_alarm_rates(qd_alarms)
+#' plot_fig5(qd_alarm_rates = qd_rates)
+plot_fig5 <- function(qd_alarm_rates, rename_vec = c("Chl-a" = "Manual_Chl", "BGA" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), Ylim=NULL){
+  # format data
+  rename_vec_rev = names(rename_vec)
+  names(rename_vec_rev) = unname(rename_vec)
+  qd_alarm_rates = qd_alarm_rates %>%
+    mutate(Variable = unname(rename_vec_rev[.data$Var]))  %>%
+    mutate(Variable = factor(.data$Variable, levels = c("Chl-a", "BGA", "D.O. sat.", "pH"), ordered = TRUE)) %>%
+    mutate(PositiveType = factor(.data$PositiveType, levels = c("TRUE", "FALSE"), ordered = TRUE))
 
+  out_plot = qd_alarm_rates %>%
+    ggplot(aes(x=Variable, y=Rate, fill=PositiveType)) +
+    geom_bar(stat="identity", position="dodge", color="black") +
+    facet_grid(cols=vars(Stat)) +
+    theme_bw() +
+    scale_fill_manual("Positive Alarm Rate, all lake-years", values=c("FALSE" = "#FFE77AFF", "TRUE" = "#5F9260FF")) +
+    labs(x="Variable", y="Rate (alarms / day)") +
+    theme(legend.position=c(0.82, 0.76),
+          legend.background = element_blank(),
+          legend.key = element_blank(),
+          strip.text = element_text(size=18))
+  if(!is.null(Ylim)){
+    out_plot = out_plot + lims(y = Ylim)
+  }
+  return(out_plot)
 }
