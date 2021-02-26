@@ -1,8 +1,99 @@
+#' Plot state variables
+#'
+#' @param time_series data frame containing time series of state variables, , see \code{\link{ts_data}} for default and formatting
+#' @param bloom_fert_df data frame of fertilization start and end and bloom start dates, see \code{\link{bloom_fert_dates}} for default and formatting
+#' @param variables_rename_vec named vector, used to change variable names displayed in plot, format is c("new name" = "original name")
+#' @param lakes_rename_vec named vector, used to change lake names displayed in plot, format is c("new name" = "original name")
+#' @param lake_colors named vector, used to specify colors for each lake, format is c("Lake" = "color")
+#' @param legend_location numerical vector of length 2, has c(x, y) position for placing legend on plot
+#'
+#' @return ggplot object plotting the time series
+#' @import ggplot2
+#' @export
+#'
+#' @examples
+#' # all data:
+#' plot_fig1()
+#'
+#' # just latest experiment
+#' plot_fig1(time_series = ts_data %>% dplyr::filter(Year >= 2018),
+#'    bloom_fert_df = bloom_fert_dates %>% dplyr::filter(Lake == "R" & Year >= 2018))
+plot_fig1 <- function(time_series = ts_data,
+                      bloom_fert_df = bloom_fert_dates,
+                      variables_rename_vec = c(`Chl-a (ug/L)` = "Manual_Chl", `BGA (cells/mL)` = "BGA_HYLB", `D.O. sat. (%)` = "DO_Sat", pH = "pH"),
+                      lakes_rename_vec = c("Reference" = "L", "Experimental" = "R"),
+                      lake_colors = c("Experimental" = "firebrick3", "Reference"= "royalblue3"),
+                      legend_location = c(0.13, 0.9)){
+  # rename variables and pivot time series longer
+  ts_formatted = time_series %>%
+    dplyr::rename(!!!variables_rename_vec) %>%
+    tidyr::pivot_longer(cols = names(variables_rename_vec), names_to = "Variable", values_to = "Value") %>%
+    dplyr::mutate(Variable = factor(Variable, levels = names(variables_rename_vec), ordered = TRUE))
+
+  # fix lake names
+  if(all(unique(ts_formatted$Lake) %in% lakes_rename_vec)){
+    lakes_rename_vec_rev = names(lakes_rename_vec)
+    names(lakes_rename_vec_rev) = unname(lakes_rename_vec)
+    ts_formatted = ts_formatted %>%
+      dplyr::mutate(Lake = unname(lakes_rename_vec_rev[.data$Lake]))
+  }
+
+  # format bloom dates
+  dates_formatted = bloom_fert_df %>%
+    dplyr::select(Year, Lake, fertStartDOY, bloomStartDOY) %>%
+    dplyr::rename(Nutrients = fertStartDOY, Bloom = bloomStartDOY) %>%
+    tidyr::pivot_longer(cols = c("Nutrients", "Bloom"), names_to="Start Of", values_to = "DOY") %>%
+    dplyr::mutate(`Start Of` = factor(`Start Of`, levels = c("Nutrients", "Bloom"), ordered = TRUE))
+
+  # fix lake names
+  if(all(unique(dates_formatted$Lake) %in% lakes_rename_vec)){
+    lakes_rename_vec_rev = names(lakes_rename_vec)
+    names(lakes_rename_vec_rev) = unname(lakes_rename_vec)
+    dates_formatted = dates_formatted %>%
+      dplyr::mutate(Lake = unname(lakes_rename_vec_rev[.data$Lake]))
+  }
+
+  # make the plot
+  p1 = ts_formatted %>%
+    ggplot(aes(x=DOY, y=Value, color=Lake)) +
+    geom_line(size=2) +
+    facet_grid(rows=vars(Variable), cols=vars(Year), scales="free_y") +
+    theme_bw() +
+    labs(x = "Day of Year", y="") +
+    # add legend
+    theme(legend.position=legend_location, legend.background = element_blank(), legend.key = element_blank())
+
+    # do some conditional modifications to the plot
+    if(length(unique(ts_formatted$Lake)) == length(lake_colors) & all(names(lake_colors) %in% unique(ts_formatted$Lake))){
+      p1 = p1 +
+        scale_color_manual(values = lake_colors)
+    }
+    # add bloom lines
+    colorMap = ifelse(length(unique(dates_formatted$Lake)) > 1, "Lake", "'black'")
+    if(length(unique(dates_formatted$Lake)) > 1){
+      p1 = p1 +
+        geom_vline(data = dates_formatted, aes(xintercept=DOY, linetype=`Start Of`, color=Lake)) +
+        scale_linetype_manual(values=c("Bloom" = "solid", "Nutrients" = "dashed"),
+                              guide = guide_legend(title.position = "top", direction="horizontal")
+                              )
+    }else{
+      p1 = p1 +
+        geom_vline(data = dates_formatted, aes(xintercept=DOY, linetype=`Start Of`)) +
+        scale_linetype_manual(values=c("Bloom" = "solid", "Nutrients" = "dashed"),
+                              guide = guide_legend(title.position = "top", direction="horizontal")
+        )
+    }
+
+
+    return(p1)
+}
+
+
 #' Plot rolling window stats and quickest detection alarms for all variables
 #'
 #' @param rolling_window_stats data frame, output from call to \code{\link{calc_rolling_stats}}
 #' @param qd_alarms data frame, output from call to \code{\link{format_qd}}
-#' @param bloom_fert_df data frame of fertilization start and end dates, see \code{\link{bloom_fert_dates}} for default and formatting
+#' @param bloom_fert_df data frame of fertilization start and end and bloom start dates, see \code{\link{bloom_fert_dates}} for default and formatting
 #' @param rename_vec named vector, used to change variable names displayed in plot, format is c("new name" = "original name")
 #'
 #' @return ggplot object showing rolling window statistics and quickest detection alarms

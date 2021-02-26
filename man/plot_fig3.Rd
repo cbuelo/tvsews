@@ -17,7 +17,7 @@ plot_fig3(
 
 \item{qd_alarms}{data frame, output from call to \code{\link{format_qd}}}
 
-\item{bloom_fert_df}{data frame of fertilization start and end dates, see \code{\link{bloom_fert_dates}} for default and formatting}
+\item{bloom_fert_df}{data frame of fertilization start and end and bloom start dates, see \code{\link{bloom_fert_dates}} for default and formatting}
 
 \item{rename_vec}{named vector, used to change variable names displayed in plot, format is c("new name" = "original name")}
 }
