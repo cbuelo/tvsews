@@ -19,4 +19,9 @@ Imports:
     hypergeo,
     tidyr,
     ggplot2,
-    gridExtra
+    gridExtra,
+    ape,
+    geosphere,
+    parallel,
+    multidplyr,
+    purrr

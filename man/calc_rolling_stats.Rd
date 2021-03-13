@@ -22,7 +22,7 @@ calc_rolling_stats(
 
 \item{var_cols}{character vector, variable names that are columns of *data* containing time series to calculate rolling window stats on}
 
-\item{id_cols}{character vector, two columns specifying "groups" to separate data into before calculating stats independently on, defaults are "Lake" and "Year"#'}
+\item{id_cols}{character vector, two columns specifying "groups" to separate data into before calculating stats independently on, defaults are "Lake" and "Year"}
 
 \item{time_col}{character, column name that defines time step of data within the *id_cols* groupings}
 

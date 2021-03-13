@@ -195,7 +195,7 @@ SD_sd <- function(x, detrend=FALSE, prop_req = 0.99){
 #'
 #' @param data data frame containing time series to calculate rolling window stats on
 #' @param var_cols character vector, variable names that are columns of *data* containing time series to calculate rolling window stats on
-#' @param id_cols character vector, two columns specifying "groups" to separate data into before calculating stats independently on, defaults are "Lake" and "Year"#'
+#' @param id_cols character vector, two columns specifying "groups" to separate data into before calculating stats independently on, defaults are "Lake" and "Year"
 #' @param time_col character, column name that defines time step of data within the *id_cols* groupings
 #' @param statistics character vector, rolling window statistics to calculate, defaults to all available: c("Mean", "SD", "SD_sd", "Ar1", "Ar1_sd")
 #' @param vars_to_log character vector, optional variables names to log10 transform and create new columns before calculating rolling window stats
