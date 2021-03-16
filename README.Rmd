@@ -30,7 +30,7 @@ devtools::install_github("cbuelo/tvsews")
 ```
 ## Example
 
-Results from most recent experiment:
+Results from most recent experiment; package is currently a work in progress:
 
 ### Set up and visualize time series data
 ```{r example, warning=FALSE, message=FALSE, fig.asp=0.5}
@@ -86,7 +86,7 @@ time_series_plot = plot_fig3(
 ```
 
 ### Calculate and plot true and false alarm rates
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, fig.asp=0.5}
 alarm_rates <- calc_alarm_rates(
   qd_alarms = ex_qd_formatted,
   bloom_fert_df = bloom_fert_dates

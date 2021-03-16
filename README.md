@@ -17,7 +17,7 @@ devtools::install_github("cbuelo/tvsews")
 
 ## Example
 
-Results from most recent experiment:
+Results from most recent experiment; package is currently a work in progress:
 
 ### Set up and visualize time series data
 
