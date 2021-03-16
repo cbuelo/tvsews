@@ -4,7 +4,7 @@
 
 <!-- badges: start -->
 <!-- badges: end -->
-tvsews is to provides code and data for a manuscript (in preparation) associated with a whole-lake fertilization experiment that compared the performance of early warning statistics (EWS) in temporal and spatial data.
+tvsews is an R package that provides code and data for a whole-lake fertilization experiment that caused an algal bloom in order to compared the performance of early warning statistics (EWS) in temporal and spatial data. It is currently under development.
 
 ## Installation
 
@@ -17,7 +17,7 @@ devtools::install_github("cbuelo/tvsews")
 
 ## Example
 
-Results from most recent experiment; package is currently a work in progress:
+Example results from most recent experiment:
 
 ### Set up and visualize time series data
 
