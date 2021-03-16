@@ -66,7 +66,7 @@ calc_moransI <- function(df_sssv, lon_col = "longitude", lat_col="latitude", mea
 #'    theme_bw()
 calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", lon_col = "longitude", var_cols=c("BGApc_ugL_tau", "ODO_percent_tau", "pH_tau"), id_cols = c("Lake", "Year", "DOY"), multiple_cores = TRUE){
   # calculate spatial standard deviation
-  spat_SD = flame_data %>%
+  spat_SD = spatial_data %>%
     group_by(across(all_of(id_cols))) %>%
     select(all_of(var_cols)) %>%
     summarise_all(sd, na.rm=TRUE) %>%
@@ -86,7 +86,7 @@ calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", 
     cluster = multidplyr::new_cluster(use_cores)
   }
   # re-format data: wide -> long, group, and nest
-  flame_data_partitioned = flame_data %>%
+  flame_data_partitioned = spatial_data %>%
     tidyr::pivot_longer(cols=all_of(var_cols), names_to = "Variable", values_to = "Measurement") %>%
     select(all_of(c(id_cols, "Variable", lat_col, lon_col, "Measurement"))) %>%
     group_by(across(all_of(c(id_cols, "Variable")))) %>%
