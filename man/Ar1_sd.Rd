@@ -20,10 +20,10 @@ numeric
 SD of lag-1 autocorrelation with detrending
 }
 \examples{
-y = rnorm(10)
+y <- rnorm(10)
 Ar1_sd(y)
 Ar1_sd(y, detrend = TRUE)
-y[1] = NA
+y[1] <- NA
 Ar1_sd(y)
 Ar1_sd(y, prop_req = 0.5)
 }

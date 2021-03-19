@@ -20,10 +20,10 @@ numeric
 Calculate the mean of values with optional (linear) detrending, and perform check that there's enough data
 }
 \examples{
-y = rnorm(10)
+y <- rnorm(10)
 Mean(y)
 Mean(y, detrend = TRUE)
-y[1] = NA
+y[1] <- NA
 Mean(y)
 Mean(y, prop_req = 0.5)
 }

@@ -39,10 +39,12 @@ a ggplot object
 Plot rolling window statistics and qd alarms
 }
 \examples{
-use_vars = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
-rw_stats = calc_rolling_stats(ts_data, var_cols=use_vars)
-qd_stats = run_qd(rw_stats, var_cols=use_vars)
-qd_alarms = format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
-plot_qd(rw_stats, qd_alarms, use_vars[1], stats = c("SD", "Ar1"),
-   plot_bloom_lines = TRUE, bloom_dates = bloom_fert_dates)
+use_vars <- c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
+rw_stats <- calc_rolling_stats(ts_data, var_cols = use_vars)
+qd_stats <- run_qd(rw_stats, var_cols = use_vars)
+qd_alarms <- format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
+plot_qd(rw_stats, qd_alarms, use_vars[1],
+  stats = c("SD", "Ar1"),
+  plot_bloom_lines = TRUE, bloom_dates = bloom_fert_dates
+)
 }

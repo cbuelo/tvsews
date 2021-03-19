@@ -18,10 +18,9 @@ data frame with true and false positive rates for combinations of variable and s
 Calculate rates of true and false alarms
 }
 \examples{
-use_vars = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
-rw_stats = calc_rolling_stats(ts_data, var_cols=use_vars)
-qd_stats = run_qd(rw_stats, var_cols=use_vars)
-qd_alarms = format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
+use_vars <- c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
+rw_stats <- calc_rolling_stats(ts_data, var_cols = use_vars)
+qd_stats <- run_qd(rw_stats, var_cols = use_vars)
+qd_alarms <- format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
 calc_alarm_rates(qd_alarms)
-
 }

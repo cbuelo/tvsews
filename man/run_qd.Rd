@@ -39,6 +39,6 @@ a data frame of values from the quickest detection method; TODO add more details
 Quickest Detection calculation
 }
 \examples{
-rw_stats = calc_rolling_stats(ts_data, var_cols=c("DO_Sat"))
-qd_stats = run_qd(rw_stats, var_cols=c("DO_Sat"))
+rw_stats <- calc_rolling_stats(ts_data, var_cols = c("DO_Sat"))
+qd_stats <- run_qd(rw_stats, var_cols = c("DO_Sat"))
 }

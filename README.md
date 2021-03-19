@@ -1,14 +1,20 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
 # tvsews
 
 <!-- badges: start -->
 <!-- badges: end -->
-tvsews is an R package that provides code and data for a whole-lake fertilization experiment that caused an algal bloom in order to compared the performance of early warning statistics (EWS) in temporal and spatial data. It is currently under development.
+
+tvsews is an R package that provides code and data for a whole-lake
+fertilization experiment that caused an algal bloom in order to compared
+the performance of early warning statistics (EWS) in temporal and
+spatial data. It is currently under development.
 
 ## Installation
 
-You can install the development version from [GitHub](https://github.com/) with:
+You can install the development version from
+[GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")

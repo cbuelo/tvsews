@@ -20,10 +20,10 @@ numeric
 Lag-1 autocorrelation with detrending
 }
 \examples{
-y = rnorm(10)
+y <- rnorm(10)
 Ar1(y)
 Ar1(y, detrend = TRUE)
-y[1] = NA
+y[1] <- NA
 Ar1(y)
 Ar1(y, prop_req = 0.5)
 }

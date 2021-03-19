@@ -8,8 +8,9 @@ plot_fig3(
   rolling_window_stats,
   qd_alarms,
   bloom_fert_df,
-  rename_vec = c(`Chl-a` = "Manual_Chl", BGA = "BGA_HYLB", `D.O. sat.` = "DO_Sat", pH =
-    "pH")
+  var_rename_vec = c(`Chl-a` = "Manual_Chl", BGA = "BGA_HYLB", `D.O. sat.` = "DO_Sat",
+    pH = "pH"),
+  legend_location = c(0.13, 0.9)
 )
 }
 \arguments{
@@ -19,7 +20,9 @@ plot_fig3(
 
 \item{bloom_fert_df}{data frame of fertilization start and end and bloom start dates, see \code{\link{bloom_fert_dates}} for default and formatting}
 
-\item{rename_vec}{named vector, used to change variable names displayed in plot, format is c("new name" = "original name")}
+\item{var_rename_vec}{named vector, used to change variable names displayed in plot, format is c("new name" = "original name")}
+
+\item{legend_location}{numerical vector of length 2, has c(x, y) position for placing legend on plot}
 }
 \value{
 ggplot object showing rolling window statistics and quickest detection alarms
@@ -28,9 +31,9 @@ ggplot object showing rolling window statistics and quickest detection alarms
 Plot rolling window stats and quickest detection alarms for all variables
 }
 \examples{
-use_vars = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
-rw_stats = calc_rolling_stats(ts_data, var_cols=use_vars)
-qd_s = run_qd(rw_stats, var_cols=use_vars)
-qd_a = format_qd(qd_s, bloom_fert_df = bloom_fert_dates)
+use_vars <- c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
+rw_stats <- calc_rolling_stats(ts_data, var_cols = use_vars)
+qd_s <- run_qd(rw_stats, var_cols = use_vars)
+qd_a <- format_qd(qd_s, bloom_fert_df = bloom_fert_dates)
 plot_fig3(rolling_window_stats = rw_stats, qd_alarms = qd_a, bloom_fert_df = bloom_fert_dates)
 }

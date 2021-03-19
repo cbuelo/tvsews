@@ -7,8 +7,8 @@
 plot_fig1(
   time_series = ts_data,
   bloom_fert_df = bloom_fert_dates,
-  variables_rename_vec = c(`Chl-a (ug/L)` = "Manual_Chl", `BGA (cells/mL)` =
-    "BGA_HYLB", `D.O. sat. (\%)` = "DO_Sat", pH = "pH"),
+  var_rename_vec = c(`Chl-a (ug/L)` = "Manual_Chl", `BGA (cells/mL)` = "BGA_HYLB",
+    `D.O. sat. (\%)` = "DO_Sat", pH = "pH"),
   lakes_rename_vec = c(Reference = "L", Experimental = "R"),
   lake_colors = c(Experimental = "firebrick3", Reference = "royalblue3"),
   legend_location = c(0.13, 0.9)
@@ -19,7 +19,7 @@ plot_fig1(
 
 \item{bloom_fert_df}{data frame of fertilization start and end and bloom start dates, see \code{\link{bloom_fert_dates}} for default and formatting}
 
-\item{variables_rename_vec}{named vector, used to change variable names displayed in plot, format is c("new name" = "original name")}
+\item{var_rename_vec}{named vector, used to change variable names displayed in plot, format is c("new name" = "original name")}
 
 \item{lakes_rename_vec}{named vector, used to change lake names displayed in plot, format is c("new name" = "original name")}
 
@@ -38,6 +38,8 @@ Plot state variables
 plot_fig1()
 
 # just latest experiment
-plot_fig1(time_series = ts_data \%>\% dplyr::filter(Year >= 2018),
-   bloom_fert_df = bloom_fert_dates \%>\% dplyr::filter(Lake == "R" & Year >= 2018))
+plot_fig1(
+  time_series = ts_data \%>\% dplyr::filter(Year >= 2018),
+  bloom_fert_df = bloom_fert_dates \%>\% dplyr::filter(Lake == "R" & Year >= 2018)
+)
 }

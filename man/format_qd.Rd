@@ -33,7 +33,7 @@ data frame with quickest detection alarm info
 Format quickest detection results for plotting
 }
 \examples{
-rw_stats = calc_rolling_stats(ts_data, var_cols=c("DO_Sat"))
-qd_stats = run_qd(rw_stats, var_cols=c("DO_Sat"))
-qd_alarms = format_qd(qd_stats, var_cols=c("DO_Sat"))
+rw_stats <- calc_rolling_stats(ts_data, var_cols = c("DO_Sat"))
+qd_stats <- run_qd(rw_stats, var_cols = c("DO_Sat"))
+qd_alarms <- format_qd(qd_stats, var_cols = c("DO_Sat"))
 }

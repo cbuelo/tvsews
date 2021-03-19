@@ -143,8 +143,14 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df, var_rename
     ggplot(aes(x = DOYtrunc, y = Value, color = Lake)) +
     geom_line(size = 1.25) +
     theme_bw() +
-    facet_grid(rows = vars(Variable), cols = vars(Year), scales = "free_y") +
-    scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = FALSE) +
+    facet_grid(rows = vars(Variable), cols = vars(Year), scales = "free_y")
+
+  if (all(unique(rw_stats_long$Lake) %in% c("R", "L"))) {
+    sd_plot <- sd_plot +
+      scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = FALSE)
+  }
+
+  sd_plot <- sd_plot +
     labs(x = "Day of Year", y = "") +
     # add alarms
     geom_point(
@@ -168,8 +174,13 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df, var_rename
     ggplot(aes(x = DOYtrunc, y = Value, color = Lake)) +
     geom_line(size = 1.25) +
     theme_bw() +
-    facet_grid(rows = vars(Variable), cols = vars(Year)) +
-    scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = FALSE) +
+    facet_grid(rows = vars(Variable), cols = vars(Year))
+
+  if (all(unique(rw_stats_long$Lake) %in% c("R", "L"))) {
+    ar1_plot <- ar1_plot +
+      scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = FALSE)
+  }
+  ar1_plot <- ar1_plot +
     labs(x = "Day of Year", y = "") +
     # add alarms
     geom_point(

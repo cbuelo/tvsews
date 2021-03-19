@@ -45,5 +45,5 @@ a data frame with the results for the specified stats, widths, variables, etc.
 Calculate rolling window statistics for multiple combinations of statistics, variables, rolling window widths, and detrending options.
 }
 \examples{
-rw_stats = calc_rolling_stats(data = ts_data, var_cols = c("DO_Sat"))
+rw_stats <- calc_rolling_stats(data = ts_data, var_cols = c("DO_Sat"))
 }

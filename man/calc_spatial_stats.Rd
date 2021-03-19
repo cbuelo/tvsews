@@ -36,10 +36,10 @@ Calculates spatial early warning statistics (spatial standard deviation and spat
 Note that time estimates printed out are very rough estimates and are based on using the default data and variables, and run on a AMD Ryzen 1800X with 8 cores/16 threads.
 }
 \examples{
-spat_stats = calc_spatial_stats(flame_data)
+spat_stats <- calc_spatial_stats(flame_data)
 library(ggplot2)
-ggplot(spat_stats \%>\% dplyr::filter(Stat == "SD"), aes(x=DOY, y=Value, color=Lake)) +
-   geom_line() +
-   facet_grid(rows=vars(Variable), cols=vars(Year), scales="free_y") +
-   theme_bw()
+ggplot(spat_stats \%>\% dplyr::filter(Stat == "SD"), aes(x = DOY, y = Value, color = Lake)) +
+  geom_line() +
+  facet_grid(rows = vars(Variable), cols = vars(Year), scales = "free_y") +
+  theme_bw()
 }

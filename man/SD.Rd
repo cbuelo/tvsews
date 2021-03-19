@@ -20,10 +20,10 @@ numeric
 Calculate the standard deviation of values with optional (linear) detrending, and perform check that there's enough data
 }
 \examples{
-y = rnorm(10)
+y <- rnorm(10)
 SD(y)
 SD(y, detrend = TRUE)
-y[1] = NA
+y[1] <- NA
 SD(y)
 SD(y, prop_req = 0.5)
 }

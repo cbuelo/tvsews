@@ -28,14 +28,14 @@ Computes spatial autocorrelation for a single sample and single variable (sssv) 
 }
 \examples{
 example_data <- data.frame(
-   lon = runif(n=10, min=-90, max=-85),
-   lat=runif(n=10, min=45, max=46),
-   meas=rnorm(10)
-   )
-calc_moransI(example_data, lon_col="lon", lat_col="lat", meas_col="meas")
+  lon = runif(n = 10, min = -90, max = -85),
+  lat = runif(n = 10, min = 45, max = 46),
+  meas = rnorm(10)
+)
+calc_moransI(example_data, lon_col = "lon", lat_col = "lat", meas_col = "meas")
 
-peter_lake_data = flame_data \%>\%
-   dplyr::filter(Lake == "R" & Date == as.Date("2019-07-22")) \%>\%
-   dplyr::select(latitude, longitude, BGApc_ugL_tau)
-calc_moransI(peter_lake_data, meas_col="BGApc_ugL_tau")
+peter_lake_data <- flame_data \%>\%
+  dplyr::filter(Lake == "R" & Date == as.Date("2019-07-22")) \%>\%
+  dplyr::select(latitude, longitude, BGApc_ugL_tau)
+calc_moransI(peter_lake_data, meas_col = "BGApc_ugL_tau")
 }
