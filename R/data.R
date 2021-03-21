@@ -50,3 +50,29 @@
 #' @source \url{Cascade research group; TODO add URL}
 "bloom_fert_dates"
 
+
+#' Boundaries for study lakes
+#'
+#' An sf data.frame with boundaries for study lakes, Peter and Paul lakes.
+#'
+#' @format An sf data frame with 2 rows and 15 variables:
+#' \describe{
+#'   \item{AREA}{numeric, lake area in square meters}
+#'   \item{PERIMETER}{numeric, lake perimenter in meters meters}
+#'   \item{LAKE_TYPE}{TODO: document}
+#'   \item{NAME}{TODO: document}
+#'   \item{UNIQUE_ID}{TODO: document}
+#'   \item{COUNTY}{TODO: document}
+#'   \item{NOTE24}{TODO: document}
+#'   \item{NEW_KEY}{TODO: document}
+#'   \item{HECTARES}{TODO: document}
+#'   \item{ACRES_GIS}{TODO: document}
+#'   \item{FMU}{TODO: document}
+#'   \item{Lake}{TODO: document}
+#'   \item{FID_1}{TODO: document}
+#'   \item{Lake_Name}{TODO: document}
+#'   \item{geometry}{TODO: document}
+#'
+#' }
+#' @source \url{TODO add where this came from}
+"peter_paul_bounds"

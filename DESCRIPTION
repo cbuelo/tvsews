@@ -24,4 +24,7 @@ Imports:
     geosphere,
     parallel,
     multidplyr,
-    purrr
+    purrr,
+    sf,
+    viridis,
+    cowplot

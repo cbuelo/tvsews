@@ -93,6 +93,63 @@ plot_fig1 <- function(time_series = ts_data,
 }
 
 
+#' Plot example maps of spatial data
+#'
+#' @param spatial_data data frame containing spatial locations and measurements of one or more variables; see \code{\link{flame_data}} for default and formatting
+#' @param lake_boundaries sf data frame containing boundaries for lakes; see \code{\link{peter_paul_bounds}} and str(peter_paul_bounds) for default and formatting
+#' @param samples_to_plot a data frame specifying which info from \code{spatial_data} should be used for plotting
+#' @param var_cols character vector, column names that hold measurements of different variables
+#'
+#' @return a ggplot object with the specified maps of spatial data
+#' @import ggplot2
+#' @export
+#'
+#' @examples
+#' plot_fig2(
+#'   spatial_data = flame_data,
+#'   samples_to_plot = data.frame(Year = 2019, DOY = c(165, 210, 228), stringsAsFactors = FALSE),
+#'   var_cols = c("BGApc_ugL_tau")
+#' )
+plot_fig2 <- function(
+                      spatial_data = flame_data,
+                      lake_boundaries = peter_paul_bounds,
+                      samples_to_plot = data.frame(Year = 2019, DOY = c(165, 210, 228), stringsAsFactors = FALSE),
+                      var_cols = c("BGApc_ugL_tau", "ODO_percent_tau", "pH_tau")) {
+  flame_to_plot <- samples_to_plot %>%
+    left_join(spatial_data) %>%
+    select(c(Year, Lake, DOY, "latitude", "longitude", all_of(var_cols))) %>%
+    mutate(DOY_lab = paste("DOY", DOY)) # %>%
+  # TODO: make this work with a function argument
+  var_labels <- data.frame(
+    Var = c("BGApc_ugL_tau", "chlor_ugL_tau", "ODO_percent_tau", "pH_tau", "specCond_tau", "turb_FNU_tau", "fDOM_QSU_tau"),
+    Var_form = c("BGA (ug/L)    ", "Chl-a", "D.O. sat. (%)", "pH            ", "Sp. Cond", "Turb.", "fDOM")
+  )
+  # convert data to sf
+  flame_to_plot_sf <- sf::st_as_sf(flame_to_plot, coords = c("longitude", "latitude"), crs = 4326, agr = "constant")
+
+  # make plot using apply
+  names_plot <- names(flame_to_plot)[!names(flame_to_plot) %in% c("Year", "Lake", "DOY", "DOY_lab", "latitude", "longitude")]
+  plot_list <- lapply(names_plot, function(Var, plotDF, varLabs) {
+    ggplot() +
+      facet_wrap(vars(DOY_lab), nrow = 1) +
+      geom_sf(data = lake_boundaries, inherit.aes = FALSE, fill = "white", size = 0.8) +
+      geom_sf(data = plotDF, aes_string(color = Var), size = 0.5) +
+      theme_bw() +
+      viridis::scale_color_viridis(option = "viridis") +
+      scale_x_continuous(breaks = c(-89.503, -89.504, -89.505), labels = c("-89.503", "-89.504", "-89.505")) +
+      scale_y_continuous(breaks = seq(46.251, 46.2535, 0.0005), labels = as.character(seq(46.251, 46.2535, 0.0005))) +
+      labs(x = "", y = "", color = varLabs[varLabs$Var == Var, "Var_form"])
+  },
+  plotDF = flame_to_plot_sf,
+  varLabs = var_labels
+  )
+  Margin <- theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"))
+  # p = grid.arrange(grobs=lapply(plot_list, "+", Margin), nrow=length(flame_vars_to_plot), bottom=textGrob("longitude", gp=gpar(fontsize=15)), left=textGrob("latitude", gp=gpar(fontsize=15), rot = 90), padding=unit(c(3), "line"))
+  out_plot <- cowplot::plot_grid(plotlist = lapply(plot_list, "+", Margin), align = "vh", nrow = length(var_cols))
+  return(out_plot)
+}
+
+
 #' Plot rolling window stats and quickest detection alarms for all variables
 #'
 #' @param rolling_window_stats data frame, output from call to \code{\link{calc_rolling_stats}}

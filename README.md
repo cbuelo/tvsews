@@ -105,13 +105,11 @@ plot_fig5(
 ### Plot example spatial data (TO DO: add function to package)
 
 ``` r
-ex_spatial_data = flame_data %>% 
-  filter(Year == 2019 & DOY == 214)
-
-ggplot(ex_spatial_data, aes(x=longitude, y=latitude, color=BGApc_ugL_tau)) + 
-  geom_point() + 
-  theme_bw() +
-  scale_color_viridis_c()
+plot_fig2(
+  spatial_data = flame_data,
+  samples_to_plot = data.frame(Year = 2019, DOY = c(165, 210, 228), stringsAsFactors = FALSE),
+  var_cols = c("BGApc_ugL_tau")
+)
 ```
 
 <img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" />
