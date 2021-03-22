@@ -9,7 +9,7 @@ plot_fig5(
   var_rename_vec = c(`Chl-a` = "Manual_Chl", BGA = "BGA_HYLB", `D.O. sat.` = "DO_Sat",
     pH = "pH"),
   y_lim = NULL,
-  title = "Positive Alarm Rat"
+  title = "Positive Alarm Rate"
 )
 }
 \arguments{

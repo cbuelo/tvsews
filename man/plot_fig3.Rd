@@ -7,7 +7,7 @@
 plot_fig3(
   rolling_window_stats,
   qd_alarms,
-  bloom_fert_df,
+  bloom_fert_df = bloom_fert_dates,
   var_rename_vec = c(`Chl-a` = "Manual_Chl", BGA = "BGA_HYLB", `D.O. sat.` = "DO_Sat",
     pH = "pH"),
   legend_location = c(0.13, 0.9)

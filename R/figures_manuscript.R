@@ -169,7 +169,7 @@ plot_fig2 <- function(
 #' qd_s <- run_qd(rw_stats, var_cols = use_vars)
 #' qd_a <- format_qd(qd_s, bloom_fert_df = bloom_fert_dates)
 #' plot_fig3(rolling_window_stats = rw_stats, qd_alarms = qd_a, bloom_fert_df = bloom_fert_dates)
-plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df, var_rename_vec = c("Chl-a" = "Manual_Chl", "BGA" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), legend_location = c(0.13, 0.9)) {
+plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fert_dates, var_rename_vec = c("Chl-a" = "Manual_Chl", "BGA" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), legend_location = c(0.13, 0.9)) {
   # rename variables
   rolling_window_stats <- rolling_window_stats %>% rename(!!!var_rename_vec)
   # pivot long for plotting
@@ -260,6 +260,75 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df, var_rename
   return(out_fig)
 }
 
+#' Plot spatial statistics time series
+#'
+#' @param spatial_stats data frame, output from call to \code{\link{calc_spatial_stats}}
+#' @param bloom_fert_df data frame of fertilization start and end and bloom start dates, see \code{\link{bloom_fert_dates}} for default and formatting
+#' @param var_rename_vec named vector, used to change variable names displayed in plot, format is c("new name" = "original name")
+#'
+#' @return a ggplot object showing the change in spatial statistics over the experiment
+#' @import ggplot2
+#' @import dplyr
+#' @export
+#'
+#' @examples
+#' spat_stats <- calc_spatial_stats(
+#'   spatial_data = flame_data
+#' )
+#' plot_fig4(spat_stats)
+plot_fig4 <- function(spatial_stats, bloom_fert_df = bloom_fert_dates, var_rename_vec = c("BGA (ug/L)" = "BGApc_ugL_tau", "DO sat." = "ODO_percent_tau", "pH" = "pH_tau")) {
+
+  # re-name the variables
+  var_rename_vec_rev <- names(var_rename_vec)
+  names(var_rename_vec_rev) <- unname(var_rename_vec)
+
+  spatial_stats <- spatial_stats %>%
+    mutate(Variable = unname(var_rename_vec_rev[.data$Variable]))
+
+  # format bloom dates for plotting
+  bloom_dates <- bloom_fert_df %>%
+    tidyr::pivot_longer(cols = c("fertStartDOY", "fertEndDOY", "bloomStartDOY"), names_to = "Start Of", values_to = "DOYtrunc") %>%
+    mutate(
+      `Start Of` = ifelse(`Start Of` == "fertStartDOY", "nutrients", `Start Of`),
+      `Start Of` = ifelse(`Start Of` == "bloomStartDOY", "bloom", `Start Of`)
+    ) %>%
+    filter(`Start Of` %in% c("nutrients", "bloom") & Lake == "R" & Year >= 2018) # TODO don't hard code lake and Year here
+
+  # make the plots
+  ar1_spatial_plot <- spatial_stats %>%
+    filter(Stat == "Moran's I") %>% #
+    ggplot(aes(x = DOY, y = Value, color = Lake)) +
+    geom_line(size = 1.25) +
+    theme_bw() +
+    facet_grid(rows = vars(Variable), cols = vars(Year)) + # , scales="free_y"
+    scale_color_manual(values = c("firebrick3", "royalblue3"), guide = guide_legend(title.position = "top")) +
+    labs(x = "", y = "") +
+    # theme(legend.position=c(0.25, 0.65), legend.background = element_blank(), legend.key = element_blank(), legend.direction ="horizontal") +
+    geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
+    scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = guide_legend(title.position = "top")) +
+    ggtitle("Moran's I") +
+    theme(legend.title = element_blank(), legend.position = "none", plot.title = element_text(hjust = 0.5))
+
+  sd_spatial_plot <- spatial_stats %>%
+    filter(Stat == "SD") %>% #
+    ggplot(aes(x = DOY, y = Value, color = Lake)) +
+    geom_line(size = 1.25) +
+    theme_bw() +
+    facet_grid(rows = vars(Variable), cols = vars(Year), scales = "free_y") +
+    scale_color_manual(values = c("firebrick3", "royalblue3"), guide = guide_legend(title.position = "top")) +
+    labs(x = "", y = "") +
+    # theme(legend.position=c(0.25, 0.65), legend.background = element_blank(), legend.key = element_blank(), legend.direction ="horizontal") +
+    geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
+    scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = guide_legend(title.position = "top")) +
+    ggtitle("SD") +
+    theme(legend.title = element_blank(), legend.position = "none", plot.title = element_text(hjust = 0.5))
+
+  out_plot <- gridExtra::grid.arrange(sd_spatial_plot, ar1_spatial_plot, bottom = "Day of Year", ncol = 2, padding = unit(1, "line"))
+
+  return(out_plot)
+}
+
+
 #' Plot true and false positive quickest detection alarm rates
 #'
 #' @param qd_alarm_rates data frame, output from call to \code{\link{calc_alarm_rates}}
@@ -280,7 +349,7 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df, var_rename
 #' qd_alarms <- format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
 #' qd_rates <- calc_alarm_rates(qd_alarms)
 #' plot_fig5(qd_alarm_rates = qd_rates)
-plot_fig5 <- function(qd_alarm_rates, var_rename_vec = c("Chl-a" = "Manual_Chl", "BGA" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), y_lim = NULL, title = "Positive Alarm Rat") {
+plot_fig5 <- function(qd_alarm_rates, var_rename_vec = c("Chl-a" = "Manual_Chl", "BGA" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), y_lim = NULL, title = "Positive Alarm Rate") {
   # format data
   var_rename_vec_rev <- names(var_rename_vec)
   names(var_rename_vec_rev) <- unname(var_rename_vec)
