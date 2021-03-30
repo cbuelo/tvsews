@@ -256,7 +256,7 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fer
       color = "black"
     ) +
     scale_fill_manual(values = c("False" = "#FFE77AFF", "True" = "#5F9260FF", "Late" = "darkgrey"), guide = FALSE) +
-    ggtitle("Ar1") +
+    ggtitle("AR(1)") +
     theme(
       legend.background = element_blank(),
       legend.key = element_blank(),
@@ -372,7 +372,9 @@ plot_fig5 <- function(qd_alarm_rates, var_rename_vec = c("Chl-a" = "Manual_Chl",
   qd_alarm_rates <- qd_alarm_rates %>%
     mutate(Variable = unname(var_rename_vec_rev[.data$Var])) %>%
     mutate(Variable = factor(.data$Variable, levels = names(var_rename_vec), ordered = TRUE)) %>%
-    mutate(PositiveType = factor(.data$PositiveType, levels = c("TRUE", "FALSE"), ordered = TRUE))
+    mutate(PositiveType = factor(.data$PositiveType, levels = c("TRUE", "FALSE"), ordered = TRUE)) %>%
+    mutate(Stat = ifelse(Stat == "Ar1", "AR(1)", "SD")) %>%
+    mutate(Stat = factor(.data$Stat, levels = c("SD", "AR(1)"), ordered = TRUE))
 
   out_plot <- qd_alarm_rates %>%
     ggplot(aes(x = Variable, y = Rate, fill = PositiveType)) +
