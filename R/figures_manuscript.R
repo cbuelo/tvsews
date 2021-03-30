@@ -169,14 +169,14 @@ plot_fig2 <- function(
 #' qd_s <- run_qd(rw_stats, var_cols = use_vars)
 #' qd_a <- format_qd(qd_s, bloom_fert_df = bloom_fert_dates)
 #' plot_fig3(rolling_window_stats = rw_stats, qd_alarms = qd_a, bloom_fert_df = bloom_fert_dates)
-plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fert_dates, var_rename_vec = c("Chl-a" = "Manual_Chl", "BGA" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), legend_location = c(0.13, 0.9)) {
+plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fert_dates, var_rename_vec = c("Chl-a" = "Manual_Chl", "Phyco" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), legend_location = c(0.13, 0.9)) {
   # rename variables
   rolling_window_stats <- rolling_window_stats %>% rename(!!!var_rename_vec)
   # pivot long for plotting
   rw_stats_long <- rolling_window_stats %>%
     filter(Stat %in% c("SD", "Ar1")) %>%
     tidyr::pivot_longer(cols = names(var_rename_vec), names_to = "Variable", values_to = "Value") %>%
-    mutate(Variable = factor(.data$Variable, levels = c("Chl-a", "BGA", "D.O. sat.", "pH"), ordered = TRUE))
+    mutate(Variable = factor(.data$Variable, levels = names(var_rename_vec), ordered = TRUE))
   # fromate bloom dates for plotting
   bloom_dates <- bloom_fert_df %>%
     tidyr::pivot_longer(cols = c("fertStartDOY", "fertEndDOY", "bloomStartDOY"), names_to = "Start Of", values_to = "DOYtrunc") %>%
@@ -191,7 +191,7 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fer
   qd_alarms_true <- qd_alarms %>%
     filter(!is.na(Alarm) & Alarm == 1) %>%
     mutate(Variable = unname(var_rename_vec_rev[.data$Var])) %>%
-    mutate(Variable = factor(.data$Variable, levels = c("Chl-a", "BGA", "D.O. sat.", "pH"), ordered = TRUE))
+    mutate(Variable = factor(.data$Variable, levels = names(var_rename_vec), ordered = TRUE))
 
   ## make SD plot
   # plot rw stats
@@ -219,7 +219,15 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fer
     ) +
     scale_fill_manual(values = c("#FFE77AFF", "#5F9260FF", "darkgrey")) +
     ggtitle("SD") +
-    theme(legend.background = element_blank(), legend.key = element_blank(), legend.position = legend_location, plot.title = element_text(hjust = 0.5)) +
+    theme(
+      legend.background = element_blank(),
+      legend.key = element_blank(),
+      legend.position = legend_location,
+      plot.title = element_text(hjust = 0.5, size = 18),
+      axis.text = element_text(size = 12),
+      axis.title = element_text(size = 16),
+      strip.text = element_text(size = 16)
+    ) +
     # add fert/bloom lines
     geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
     scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = FALSE)
@@ -249,7 +257,15 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fer
     ) +
     scale_fill_manual(values = c("False" = "#FFE77AFF", "True" = "#5F9260FF", "Late" = "darkgrey"), guide = FALSE) +
     ggtitle("Ar1") +
-    theme(legend.background = element_blank(), legend.key = element_blank(), legend.position = legend_location, plot.title = element_text(hjust = 0.5)) +
+    theme(
+      legend.background = element_blank(),
+      legend.key = element_blank(),
+      legend.position = legend_location,
+      plot.title = element_text(hjust = 0.5, size = 18),
+      axis.text = element_text(size = 12),
+      axis.title = element_text(size = 16),
+      strip.text = element_text(size = 16)
+    ) +
     # add fert/bloom lines
     geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
     scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = FALSE)
@@ -349,13 +365,13 @@ plot_fig4 <- function(spatial_stats, bloom_fert_df = bloom_fert_dates, var_renam
 #' qd_alarms <- format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
 #' qd_rates <- calc_alarm_rates(qd_alarms)
 #' plot_fig5(qd_alarm_rates = qd_rates)
-plot_fig5 <- function(qd_alarm_rates, var_rename_vec = c("Chl-a" = "Manual_Chl", "BGA" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), y_lim = NULL, title = "Positive Alarm Rate") {
+plot_fig5 <- function(qd_alarm_rates, var_rename_vec = c("Chl-a" = "Manual_Chl", "Phyco" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), y_lim = NULL, plot_title = "", legend_title = "Positive Alarm Rate") {
   # format data
   var_rename_vec_rev <- names(var_rename_vec)
   names(var_rename_vec_rev) <- unname(var_rename_vec)
   qd_alarm_rates <- qd_alarm_rates %>%
     mutate(Variable = unname(var_rename_vec_rev[.data$Var])) %>%
-    mutate(Variable = factor(.data$Variable, levels = c("Chl-a", "BGA", "D.O. sat.", "pH"), ordered = TRUE)) %>%
+    mutate(Variable = factor(.data$Variable, levels = names(var_rename_vec), ordered = TRUE)) %>%
     mutate(PositiveType = factor(.data$PositiveType, levels = c("TRUE", "FALSE"), ordered = TRUE))
 
   out_plot <- qd_alarm_rates %>%
@@ -363,20 +379,24 @@ plot_fig5 <- function(qd_alarm_rates, var_rename_vec = c("Chl-a" = "Manual_Chl",
     geom_bar(stat = "identity", position = "dodge", color = "black") +
     facet_grid(cols = vars(Stat)) +
     theme_bw() +
-    scale_fill_manual(title, values = c("FALSE" = "#FFE77AFF", "TRUE" = "#5F9260FF")) +
+    scale_fill_manual(legend_title, values = c("FALSE" = "#FFE77AFF", "TRUE" = "#5F9260FF")) +
     labs(x = "Variable", y = "Rate (alarms / day)") +
     theme(
       legend.position = c(0.82, 0.76),
       legend.background = element_blank(),
       legend.key = element_blank(),
-      strip.text = element_text(size = 18)
+      plot.title = element_text(hjust = 0.5, size = 18),
+      axis.text.y = element_text(size = 12),
+      axis.text.x = element_text(size = 16),
+      axis.title = element_text(size = 16),
+      strip.text = element_text(size = 16)
     )
   if (!is.null(y_lim)) {
     out_plot <- out_plot + lims(y = y_lim)
   }
   if (!is.null(title)) {
     out_plot <- out_plot +
-      ggtitle(title)
+      ggtitle(plot_title)
   }
   return(out_plot)
 }
