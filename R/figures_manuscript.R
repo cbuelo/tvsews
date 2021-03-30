@@ -208,7 +208,7 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fer
   }
 
   sd_plot <- sd_plot +
-    labs(x = "Day of Year", y = "") +
+    labs(x = "", y = "") +
     # add alarms
     geom_point(
       data = qd_alarms_true %>% filter(Stat == "SD"),
@@ -246,7 +246,7 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fer
       scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = FALSE)
   }
   ar1_plot <- ar1_plot +
-    labs(x = "Day of Year", y = "") +
+    labs(x = "", y = "") +
     # add alarms
     geom_point(
       data = qd_alarms_true %>% filter(Stat == "Ar1"),
@@ -272,7 +272,7 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fer
 
 
   ## combine
-  out_fig <- gridExtra::grid.arrange(sd_plot, ar1_plot, ncol = 2)
+  out_fig <- gridExtra::grid.arrange(sd_plot, ar1_plot, bottom=textGrob("Day of Year", gp=gpar(fontsize=18), vjust=-.25), ncol=2, padding=unit(1, "line"))
   return(out_fig)
 }
 
