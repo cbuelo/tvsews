@@ -144,7 +144,6 @@ plot_fig2 <- function(
   varLabs = var_labels
   )
   Margin <- theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"))
-  # p = grid.arrange(grobs=lapply(plot_list, "+", Margin), nrow=length(flame_vars_to_plot), bottom=textGrob("longitude", gp=gpar(fontsize=15)), left=textGrob("latitude", gp=gpar(fontsize=15), rot = 90), padding=unit(c(3), "line"))
   out_plot <- cowplot::plot_grid(plotlist = lapply(plot_list, "+", Margin), align = "vh", nrow = length(var_cols))
   return(out_plot)
 }
@@ -272,7 +271,7 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fer
 
 
   ## combine
-  out_fig <- gridExtra::grid.arrange(sd_plot, ar1_plot, bottom=textGrob("Day of Year", gp=gpar(fontsize=18), vjust=-.25), ncol=2, padding=unit(1, "line"))
+  out_fig <- gridExtra::grid.arrange(sd_plot, ar1_plot, bottom=grid::textGrob("Day of Year", gp=grid::gpar(fontsize=18), vjust=-.25), ncol=2, padding=unit(1, "line"))
   return(out_fig)
 }
 
@@ -299,7 +298,8 @@ plot_fig4 <- function(spatial_stats, bloom_fert_df = bloom_fert_dates, var_renam
   names(var_rename_vec_rev) <- unname(var_rename_vec)
 
   spatial_stats <- spatial_stats %>%
-    mutate(Variable = unname(var_rename_vec_rev[.data$Variable]))
+    mutate(Variable = unname(var_rename_vec_rev[.data$Variable])) %>%
+    mutate(Variable = factor(.data$Variable, levels = names(var_rename_vec), ordered = TRUE))
 
   # format bloom dates for plotting
   bloom_dates <- bloom_fert_df %>%
@@ -317,13 +317,21 @@ plot_fig4 <- function(spatial_stats, bloom_fert_df = bloom_fert_dates, var_renam
     geom_line(size = 1.25) +
     theme_bw() +
     facet_grid(rows = vars(Variable), cols = vars(Year)) + # , scales="free_y"
-    scale_color_manual(values = c("firebrick3", "royalblue3"), guide = guide_legend(title.position = "top")) +
+    scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = guide_legend(title.position = "top")) +
     labs(x = "", y = "") +
     # theme(legend.position=c(0.25, 0.65), legend.background = element_blank(), legend.key = element_blank(), legend.direction ="horizontal") +
     geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
     scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = guide_legend(title.position = "top")) +
     ggtitle("Moran's I") +
-    theme(legend.title = element_blank(), legend.position = "none", plot.title = element_text(hjust = 0.5))
+    theme(
+      legend.title=element_blank(),
+      legend.position = "none",
+      plot.title=element_text(hjust=0.5, size=18),
+      strip.text = element_text(size=16),
+      legend.text = element_text(size=12),
+      axis.text=element_text(size=12),
+      panel.spacing.x = unit(1, "lines")
+    )
 
   sd_spatial_plot <- spatial_stats %>%
     filter(Stat == "SD") %>% #
@@ -331,15 +339,23 @@ plot_fig4 <- function(spatial_stats, bloom_fert_df = bloom_fert_dates, var_renam
     geom_line(size = 1.25) +
     theme_bw() +
     facet_grid(rows = vars(Variable), cols = vars(Year), scales = "free_y") +
-    scale_color_manual(values = c("firebrick3", "royalblue3"), guide = guide_legend(title.position = "top")) +
+    scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = guide_legend(title.position = "top")) +
     labs(x = "", y = "") +
     # theme(legend.position=c(0.25, 0.65), legend.background = element_blank(), legend.key = element_blank(), legend.direction ="horizontal") +
     geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
     scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = guide_legend(title.position = "top")) +
-    ggtitle("SD") +
-    theme(legend.title = element_blank(), legend.position = "none", plot.title = element_text(hjust = 0.5))
+    ggtitle("SD")  +
+    theme(
+      legend.title=element_blank(),
+      legend.position = "none",
+      plot.title=element_text(hjust=0.5, size=18),
+      strip.text = element_text(size=16),
+      legend.text = element_text(size=12),
+      axis.text=element_text(size=12),
+      panel.spacing.x = unit(1, "lines")
+    )
 
-  out_plot <- gridExtra::grid.arrange(sd_spatial_plot, ar1_spatial_plot, bottom = "Day of Year", ncol = 2, padding = unit(1, "line"))
+  out_plot <- gridExtra::grid.arrange(sd_spatial_plot, ar1_spatial_plot, bottom = grid::textGrob("Day of Year", gp=grid::gpar(fontsize=18), vjust=-.25), ncol = 2, padding = unit(1, "line"))
 
   return(out_plot)
 }

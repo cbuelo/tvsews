@@ -6,10 +6,11 @@
 \usage{
 plot_fig5(
   qd_alarm_rates,
-  var_rename_vec = c(`Chl-a` = "Manual_Chl", BGA = "BGA_HYLB", `D.O. sat.` = "DO_Sat",
-    pH = "pH"),
+  var_rename_vec = c(`Chl-a` = "Manual_Chl", Phyco = "BGA_HYLB", `D.O. sat.` =
+    "DO_Sat", pH = "pH"),
   y_lim = NULL,
-  title = "Positive Alarm Rate"
+  plot_title = "",
+  legend_title = "Positive Alarm Rate"
 )
 }
 \arguments{
