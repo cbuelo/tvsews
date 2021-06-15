@@ -28,4 +28,5 @@ Imports:
     sf,
     viridis,
     cowplot,
-    grid
+    grid,
+    shiny
