@@ -78,7 +78,7 @@ time_series_plot <- plot_temporal_EWS(
   rolling_window_stats = ex_rw_stats,
   qd_alarms = ex_qd_formatted,
   bloom_fert_df = ex_bloom_fert_dates,
-  var_rename_vec = c(`Phycocyanin (cells/mL)` = "BGA_HYLB"),
+  var_rename_vec = c(`Phyco` = "BGA_HYLB"),
   legend_location = c(0.2, 0.7)
 )
 ```
