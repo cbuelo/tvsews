@@ -227,14 +227,14 @@ format_qd <- function(qd_stats, var_cols = c("Manual_Chl", "BGA_HYLB", "DO_Sat",
 
   statsAlarms$AlarmType <- "NA"
   statsAlarms <- statsAlarms %>%
-    dplyr::mutate(AlarmType = ifelse(DOYtrunc < fertStartDOY & !is.na(Alarm) & Alarm == 1, "False", AlarmType)) %>%
-    dplyr::mutate(AlarmType = ifelse(DOYtrunc >= fertStartDOY & DOYtrunc < bloomStartDOY & !is.na(Alarm) & Alarm == 1, "True", AlarmType)) %>%
-    dplyr::mutate(AlarmType = ifelse(DOYtrunc >= bloomStartDOY & !is.na(Alarm) & Alarm == 1, "Late", AlarmType))
+    dplyr::mutate(AlarmType = ifelse(.data$DOYtrunc < fertStartDOY & !is.na(.data$Alarm) & .data$Alarm == 1, "False", .data$AlarmType)) %>%
+    dplyr::mutate(AlarmType = ifelse(.data$DOYtrunc >= fertStartDOY & .data$DOYtrunc < bloomStartDOY & !is.na(.data$Alarm) & .data$Alarm == 1, "True", .data$AlarmType)) %>%
+    dplyr::mutate(AlarmType = ifelse(.data$DOYtrunc >= bloomStartDOY & !is.na(.data$Alarm) & .data$Alarm == 1, "Late", .data$AlarmType))
 
   statsAlarms$AlarmType <- factor(statsAlarms$AlarmType, levels = c("False", "True", "Late"), ordered = TRUE)
 
   statsAlarms_out <- statsAlarms %>%
-    dplyr::filter(!is.na(Value) & !is.na(Alarm)) %>%
+    dplyr::filter(!is.na(.data$Value) & !is.na(.data$Alarm)) %>%
     dplyr::select(-c(fertStartDOY, fertEndDOY, bloomStartDOY))
 
   return(statsAlarms_out)
@@ -271,7 +271,7 @@ plot_qd <- function(rolling_window_stats, qd_alarms, var_col, stats = c("SD", "A
 
   # get just the alarms
   statsAlarms <- qd_alarms %>%
-    dplyr::filter(!is.na(Alarm) & Alarm == 1 & Var == var_col)
+    dplyr::filter(!is.na(.data$Alarm) & .data$Alarm == 1 & .data$Var == var_col)
 
 
   # add the points
@@ -322,17 +322,17 @@ calc_alarm_rates <- function(qd_alarms, bloom_fert_df = bloom_fert_dates) {
   # assign DOYs to time periods
   qd_alarms_wDates$TimePeriod <- NA
   qd_alarms_wDates <- qd_alarms_wDates %>%
-    dplyr::mutate(TimePeriod = ifelse(DOYtrunc < fertStartDOY, "preFert", TimePeriod)) %>%
-    dplyr::mutate(TimePeriod = ifelse(DOYtrunc >= fertStartDOY & DOYtrunc < bloomStartDOY, "alarmPeriod", TimePeriod)) %>%
-    dplyr::mutate(TimePeriod = ifelse(DOYtrunc >= bloomStartDOY, "postBloom", TimePeriod))
+    dplyr::mutate(TimePeriod = ifelse(.data$DOYtrunc < fertStartDOY, "preFert", .data$TimePeriod)) %>%
+    dplyr::mutate(TimePeriod = ifelse(.data$DOYtrunc >= fertStartDOY & .data$DOYtrunc < bloomStartDOY, "alarmPeriod", .data$TimePeriod)) %>%
+    dplyr::mutate(TimePeriod = ifelse(.data$DOYtrunc >= bloomStartDOY, "postBloom", .data$TimePeriod))
 
   # calculate rates of positive alarms
   qd_alarm_rates <- qd_alarms_wDates %>%
-    dplyr::filter(TimePeriod != "postBloom") %>%
-    dplyr::group_by(Var, Stat, TimePeriod) %>%
-    dplyr::summarise(nAlarms = sum(Alarm == 1), nDays = sum(Alarm %in% c(0, 1))) %>%
+    dplyr::filter(.data$TimePeriod != "postBloom") %>%
+    dplyr::group_by(.data$Var, .data$Stat, .data$TimePeriod) %>%
+    dplyr::summarise(nAlarms = sum(.data$Alarm == 1), nDays = sum(.data$Alarm %in% c(0, 1))) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(Rate = nAlarms / nDays, PositiveType = ifelse(TimePeriod == "preFert", FALSE, TRUE))
+    dplyr::mutate(Rate = .data$nAlarms / .data$nDays, PositiveType = ifelse(.data$TimePeriod == "preFert", FALSE, TRUE))
 
   return(qd_alarm_rates)
 }

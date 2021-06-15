@@ -1,3 +1,13 @@
+if(getRversion() >= "2.15.1"){
+  flame_vars = c("Lake", "Year", "DOY", "Date", "date_time", "latitude", "longitude", "BGApc_ugL_tau", "ODO_percent_tau", "pH_tau" )
+  ts_vars = c("Lake", "Year", "DOY", "BGA_HYLB", "Manual_Chl", "DO_Sat", "pH" )
+  fert_vars = c("Year", "Lake", "fertStartDOY", "fertEndDOY", "bloomStartDOY")
+  bounds_vars = c("AREA", "PERIMETER", "LAKE_TYPE", "NAME", "UNIQUE_ID", "COUNTY", "NOTE24", "NEW_KEY", "HECTARES", "ACRES_GIS", "FMU", "Lake", "FID_1", "Lake_Name", "geometry")
+  df_vars = c("bloom_fert_dates", "flame_data", "peter_paul_bounds", "ts_data")
+  plot_vars = c("Start Of", "Value", "DOY_lab", "DOYtrunc", "Variable", "AlarmType", "Rate", "PositiveType")
+  utils::globalVariables(unique(c(flame_vars, ts_vars, fert_vars, bounds_vars, df_vars, plot_vars)))
+}
+
 #' Plot state variables
 #'
 #' @param time_series data frame containing time series of state variables, , see \code{\link{ts_data}} for default and formatting
@@ -13,14 +23,14 @@
 #'
 #' @examples
 #' # all data:
-#' plot_fig1()
+#' plot_state_vars()
 #'
 #' # just latest experiment
-#' plot_fig1(
+#' plot_state_vars(
 #'   time_series = ts_data %>% dplyr::filter(Year >= 2018),
 #'   bloom_fert_df = bloom_fert_dates %>% dplyr::filter(Lake == "R" & Year >= 2018)
 #' )
-plot_fig1 <- function(time_series = ts_data,
+plot_state_vars <- function(time_series = ts_data,
                       bloom_fert_df = bloom_fert_dates,
                       var_rename_vec = c(`Chl-a (ug/L)` = "Manual_Chl", `BGA (cells/mL)` = "BGA_HYLB", `D.O. sat. (%)` = "DO_Sat", pH = "pH"),
                       lakes_rename_vec = c("Reference" = "L", "Experimental" = "R"),
@@ -30,7 +40,7 @@ plot_fig1 <- function(time_series = ts_data,
   ts_formatted <- time_series %>%
     dplyr::rename(!!!var_rename_vec) %>%
     tidyr::pivot_longer(cols = names(var_rename_vec), names_to = "Variable", values_to = "Value") %>%
-    dplyr::mutate(Variable = factor(Variable, levels = names(var_rename_vec), ordered = TRUE))
+    dplyr::mutate(Variable = factor(.data$Variable, levels = names(var_rename_vec), ordered = TRUE))
 
   # fix lake names
   if (all(unique(ts_formatted$Lake) %in% lakes_rename_vec)) {
@@ -105,12 +115,12 @@ plot_fig1 <- function(time_series = ts_data,
 #' @export
 #'
 #' @examples
-#' plot_fig2(
+#' plot_spatial_data(
 #'   spatial_data = flame_data,
 #'   samples_to_plot = data.frame(Year = 2019, DOY = c(165, 210, 228), stringsAsFactors = FALSE),
 #'   var_cols = c("BGApc_ugL_tau")
 #' )
-plot_fig2 <- function(
+plot_spatial_data <- function(
                       spatial_data = flame_data,
                       lake_boundaries = peter_paul_bounds,
                       samples_to_plot = data.frame(Year = 2019, DOY = c(165, 210, 228), stringsAsFactors = FALSE),
@@ -167,8 +177,9 @@ plot_fig2 <- function(
 #' rw_stats <- calc_rolling_stats(ts_data, var_cols = use_vars)
 #' qd_s <- run_qd(rw_stats, var_cols = use_vars)
 #' qd_a <- format_qd(qd_s, bloom_fert_df = bloom_fert_dates)
-#' plot_fig3(rolling_window_stats = rw_stats, qd_alarms = qd_a, bloom_fert_df = bloom_fert_dates)
-plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fert_dates, var_rename_vec = c("Chl-a" = "Manual_Chl", "Phyco" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), legend_location = c(0.13, 0.9)) {
+#' plot_temporal_EWS(rolling_window_stats = rw_stats,
+#'   qd_alarms = qd_a, bloom_fert_df = bloom_fert_dates)
+plot_temporal_EWS <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fert_dates, var_rename_vec = c("Chl-a" = "Manual_Chl", "Phyco" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), legend_location = c(0.13, 0.9)) {
   # rename variables
   rolling_window_stats <- rolling_window_stats %>% rename(!!!var_rename_vec)
   # pivot long for plotting
@@ -188,7 +199,7 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fer
   var_rename_vec_rev <- names(var_rename_vec)
   names(var_rename_vec_rev) <- unname(var_rename_vec)
   qd_alarms_true <- qd_alarms %>%
-    filter(!is.na(Alarm) & Alarm == 1) %>%
+    filter(!is.na(.data$Alarm) & .data$Alarm == 1) %>%
     mutate(Variable = unname(var_rename_vec_rev[.data$Var])) %>%
     mutate(Variable = factor(.data$Variable, levels = names(var_rename_vec), ordered = TRUE))
 
@@ -290,8 +301,8 @@ plot_fig3 <- function(rolling_window_stats, qd_alarms, bloom_fert_df = bloom_fer
 #' spat_stats <- calc_spatial_stats(
 #'   spatial_data = flame_data
 #' )
-#' plot_fig4(spat_stats)
-plot_fig4 <- function(spatial_stats, bloom_fert_df = bloom_fert_dates, var_rename_vec = c("BGA (ug/L)" = "BGApc_ugL_tau", "DO sat." = "ODO_percent_tau", "pH" = "pH_tau")) {
+#' plot_spatial_EWS(spat_stats)
+plot_spatial_EWS <- function(spatial_stats, bloom_fert_df = bloom_fert_dates, var_rename_vec = c("BGA (ug/L)" = "BGApc_ugL_tau", "DO sat." = "ODO_percent_tau", "pH" = "pH_tau")) {
 
   # re-name the variables
   var_rename_vec_rev <- names(var_rename_vec)
@@ -366,7 +377,8 @@ plot_fig4 <- function(spatial_stats, bloom_fert_df = bloom_fert_dates, var_renam
 #' @param qd_alarm_rates data frame, output from call to \code{\link{calc_alarm_rates}}
 #' @param var_rename_vec named vector, used to change variable names displayed in plot, format is c("new name" = "original name")
 #' @param y_lim numeric vector of length 2, optionally specify y limits manually
-#' @param title character string, optional main title for plot
+#' @param plot_title character string, optional main title for plot
+#' @param legend_title character string, optional title for legend
 #'
 #' @return ggplot2 object, bar plot giving the true and false positive rates
 #' @export
@@ -380,8 +392,8 @@ plot_fig4 <- function(spatial_stats, bloom_fert_df = bloom_fert_dates, var_renam
 #' qd_stats <- run_qd(rw_stats, var_cols = use_vars)
 #' qd_alarms <- format_qd(qd_stats, bloom_fert_df = bloom_fert_dates)
 #' qd_rates <- calc_alarm_rates(qd_alarms)
-#' plot_fig5(qd_alarm_rates = qd_rates)
-plot_fig5 <- function(qd_alarm_rates, var_rename_vec = c("Chl-a" = "Manual_Chl", "Phyco" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), y_lim = NULL, plot_title = "", legend_title = "Positive Alarm Rate") {
+#' plot_alarm_rates(qd_alarm_rates = qd_rates)
+plot_alarm_rates <- function(qd_alarm_rates, var_rename_vec = c("Chl-a" = "Manual_Chl", "Phyco" = "BGA_HYLB", "D.O. sat." = "DO_Sat", "pH" = "pH"), y_lim = NULL, plot_title = NULL, legend_title = "Positive Alarm Rate") {
   # format data
   var_rename_vec_rev <- names(var_rename_vec)
   names(var_rename_vec_rev) <- unname(var_rename_vec)
@@ -412,7 +424,7 @@ plot_fig5 <- function(qd_alarm_rates, var_rename_vec = c("Chl-a" = "Manual_Chl",
   if (!is.null(y_lim)) {
     out_plot <- out_plot + lims(y = y_lim)
   }
-  if (!is.null(title)) {
+  if (!is.null(plot_title)) {
     out_plot <- out_plot +
       ggtitle(plot_title)
   }

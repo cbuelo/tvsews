@@ -2,7 +2,7 @@
 #'
 #' Run this function (with no arguments) to launch a shiny application that allows for visualizing spatial measurements for user-chosen dates and variables.
 #'
-#' @return
+#' @return opens a shiny app
 #' @import shiny
 #' @import ggplot2
 #' @export

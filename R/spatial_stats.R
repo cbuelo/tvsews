@@ -1,3 +1,7 @@
+if(getRversion() >= "2.15.1"){
+  utils::globalVariables(c("grouped_data"))
+}
+
 #' Calculate Moran's I from a data frame
 #'
 #' Computes spatial autocorrelation for a single sample and single variable (sssv) from a data frame with three columns (longitude, latitude, and measurement). Uses inverse of distance between points in Moran's I calculation.
@@ -69,7 +73,7 @@ calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", 
   spat_SD <- spatial_data %>%
     group_by(across(all_of(id_cols))) %>%
     select(all_of(var_cols)) %>%
-    summarise_all(sd, na.rm = TRUE) %>%
+    summarise_all(stats::sd, na.rm = TRUE) %>%
     tidyr::pivot_longer(cols = all_of(var_cols), names_to = "Variable", values_to = "Value") %>%
     mutate(Stat = "SD") %>%
     ungroup()
@@ -90,7 +94,7 @@ calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", 
     tidyr::pivot_longer(cols = all_of(var_cols), names_to = "Variable", values_to = "Measurement") %>%
     select(all_of(c(id_cols, "Variable", lat_col, lon_col, "Measurement"))) %>%
     group_by(across(all_of(c(id_cols, "Variable")))) %>%
-    tidyr::nest()
+    tidyr::nest(grouped_data = - group_cols())
 
   # partition data and set up cluster if using multiple cores
   if (multiple_cores == TRUE) {
@@ -104,7 +108,7 @@ calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", 
 
   # do the calculation
   morans_I0 <- flame_data_partitioned %>%
-    mutate(Value = purrr::map(data, calc_moransI))
+    mutate(Value = purrr::map(grouped_data, calc_moransI))
 
   if (multiple_cores == TRUE) {
     morans_I0 <- morans_I0 %>%
@@ -112,8 +116,8 @@ calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", 
   }
 
   morans_I <- morans_I0 %>%
-    tidyr::unnest(Value) %>%
-    select(-data) %>%
+    tidyr::unnest(.data$Value) %>%
+    select(-grouped_data) %>%
     mutate(Stat = "Moran's I")
 
   spat_stats_comb <- bind_rows(spat_SD, morans_I)

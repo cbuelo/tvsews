@@ -38,7 +38,7 @@ ex_data <- ts_data %>%
 ex_bloom_fert_dates <- bloom_fert_dates %>%
   filter(Year >= 2018 & Lake == "R")
 
-plot_fig1(
+plot_state_vars(
   time_series = ex_data,
   bloom_fert_df = ex_bloom_fert_dates,
   var_rename_vec = c(`Phycocyanin (cells/mL)` = "BGA_HYLB"),
@@ -74,7 +74,7 @@ ex_qd_formatted <- format_qd(
 
 ``` r
 # plot the rolling window statistics and alarms
-time_series_plot <- plot_fig3(
+time_series_plot <- plot_temporal_EWS(
   rolling_window_stats = ex_rw_stats,
   qd_alarms = ex_qd_formatted,
   bloom_fert_df = ex_bloom_fert_dates,
@@ -93,10 +93,10 @@ alarm_rates <- calc_alarm_rates(
   bloom_fert_df = bloom_fert_dates
 )
 
-plot_fig5(
+plot_alarm_rates(
   qd_alarm_rates = alarm_rates,
   var_rename_vec = c("Phycocyanin" = "BGA_HYLB"),
-  title = "Positive Alarm Rate"
+  legend_title = "Positive Alarm Rate"
 )
 ```
 
@@ -105,7 +105,7 @@ plot_fig5(
 ### Plot example spatial data
 
 ``` r
-plot_fig2(
+plot_spatial_data(
   spatial_data = flame_data,
   samples_to_plot = data.frame(Year = 2019, DOY = c(165, 210, 228), stringsAsFactors = FALSE),
   var_cols = c("BGApc_ugL_tau")
@@ -131,7 +131,7 @@ spatial_stats_pbfp <- calc_spatial_stats(
 ### Plot spatial statistics
 
 ``` r
-spatial_results_plot <- plot_fig4(spatial_stats_pbfp)
+spatial_results_plot <- plot_spatial_EWS(spatial_stats_pbfp)
 ```
 
 <img src="man/figures/README-unnamed-chunk-7-1.png" width="100%" />
