@@ -55,6 +55,7 @@ calc_moransI <- function(df_sssv, lon_col = "longitude", lat_col = "latitude", m
 #' @param lat_col character string, column name for latitude column
 #' @param var_cols character vector, column names that hold measurements of different variables
 #' @param id_cols character vector, columns that identify unique sampling events to separate data into before calculating stats independently on, defaults are "Lake", "Year", and "DOY"
+#' @param statistics character vector, statistics to run; options are "SD", "moransI", "skew", and "kurt"
 #' @param multiple_cores TRUE (default) or FALSE, should spatial autocorrelation calculations be run on multiple cores to speed up calculations?
 #'
 #' @return data frame with calculated spatial stats (SD and Moran's I) for each sample and variable
@@ -68,59 +69,93 @@ calc_moransI <- function(df_sssv, lon_col = "longitude", lat_col = "latitude", m
 #'   geom_line() +
 #'   facet_grid(rows = vars(Variable), cols = vars(Year), scales = "free_y") +
 #'   theme_bw()
-calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", lon_col = "longitude", var_cols = c("BGApc_ugL_tau", "ODO_percent_tau", "pH_tau"), id_cols = c("Lake", "Year", "DOY"), multiple_cores = TRUE) {
+calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", lon_col = "longitude", var_cols = c("BGApc_ugL_tau", "ODO_percent_tau", "pH_tau"), id_cols = c("Lake", "Year", "DOY"), statistics = c("SD", "moransI"), multiple_cores = TRUE) {
+
+  results_list = list()
   # calculate spatial standard deviation
-  spat_SD <- spatial_data %>%
-    group_by(across(all_of(id_cols))) %>%
-    select(all_of(var_cols)) %>%
-    summarise_all(stats::sd, na.rm = TRUE) %>%
-    tidyr::pivot_longer(cols = all_of(var_cols), names_to = "Variable", values_to = "Value") %>%
-    mutate(Stat = "SD") %>%
-    ungroup()
+  if("SD" %in% statistics){
+    spat_SD <- spatial_data %>%
+      group_by(across(all_of(id_cols))) %>%
+      select(all_of(var_cols)) %>%
+      summarise_all(stats::sd, na.rm = TRUE) %>%
+      tidyr::pivot_longer(cols = all_of(var_cols), names_to = "Variable", values_to = "Value") %>%
+      mutate(Stat = "SD") %>%
+      ungroup()
 
-  # calculate moran's I
-  # warn this will take a long time if not using multiple cores
-  if (multiple_cores == FALSE) {
-    message("multiple_cores set to FALSE, this will probably take awhile (~10 minutes for default data)")
-  } else {
-    cores <- parallel::detectCores()
-    use_cores <- max(cores - 2, 1)
-    # give a rough estimate of time it will take
-    message(paste("Using", use_cores, "cores; this will probably take roughly", round(15 / use_cores, 1), "minutes (assuming using default data)"))
-    cluster <- multidplyr::new_cluster(use_cores)
-  }
-  # re-format data: wide -> long, group, and nest
-  flame_data_partitioned <- spatial_data %>%
-    tidyr::pivot_longer(cols = all_of(var_cols), names_to = "Variable", values_to = "Measurement") %>%
-    select(all_of(c(id_cols, "Variable", lat_col, lon_col, "Measurement"))) %>%
-    group_by(across(all_of(c(id_cols, "Variable")))) %>%
-    tidyr::nest(grouped_data = - group_cols())
-
-  # partition data and set up cluster if using multiple cores
-  if (multiple_cores == TRUE) {
-    # partition data
-    flame_data_partitioned <- flame_data_partitioned %>%
-      multidplyr::partition(cluster)
-    # copy info to cluster
-    multidplyr::cluster_copy(cluster, "calc_moransI")
-    multidplyr::cluster_library(cluster, c("ape", "dplyr", "magrittr"))
+    results_list = append(results_list,  as.data.frame(spat_SD))
   }
 
-  # do the calculation
-  morans_I0 <- flame_data_partitioned %>%
-    mutate(Value = purrr::map(grouped_data, calc_moransI))
+  if("skew" %in% statistics){
+    spat_skew <- spatial_data %>%
+      group_by(across(all_of(id_cols))) %>%
+      select(all_of(var_cols)) %>%
+      summarise_all(moments::skewness, na.rm = TRUE) %>%
+      tidyr::pivot_longer(cols = all_of(var_cols), names_to = "Variable", values_to = "Value") %>%
+      mutate(Stat = "skew") %>%
+      ungroup()
 
-  if (multiple_cores == TRUE) {
-    morans_I0 <- morans_I0 %>%
-      collect()
+    results_list = append(results_list,  as.data.frame(spat_skew))
   }
 
-  morans_I <- morans_I0 %>%
-    tidyr::unnest(.data$Value) %>%
-    select(-grouped_data) %>%
-    mutate(Stat = "Moran's I")
+  if("kurt" %in% statistics){
+    spat_kurt <- spatial_data %>%
+      group_by(across(all_of(id_cols))) %>%
+      select(all_of(var_cols)) %>%
+      summarise_all(moments::skewness, na.rm = TRUE) %>%
+      tidyr::pivot_longer(cols = all_of(var_cols), names_to = "Variable", values_to = "Value") %>%
+      mutate(Stat = "kurt") %>%
+      ungroup()
 
-  spat_stats_comb <- bind_rows(spat_SD, morans_I)
+    results_list = append(results_list,  as.data.frame(spat_kurt))
+  }
+
+  if("moransI" %in% statistics){
+    # calculate moran's I
+    # warn this will take a long time if not using multiple cores
+    if (multiple_cores == FALSE) {
+      message("multiple_cores set to FALSE, this will probably take awhile (~10 minutes for default data)")
+    } else {
+      cores <- parallel::detectCores()
+      use_cores <- max(cores - 2, 1)
+      # give a rough estimate of time it will take
+      message(paste("Using", use_cores, "cores; this will probably take roughly", round(15 / use_cores, 1), "minutes (assuming using default data)"))
+      cluster <- multidplyr::new_cluster(use_cores)
+    }
+    # re-format data: wide -> long, group, and nest
+    flame_data_partitioned <- spatial_data %>%
+      tidyr::pivot_longer(cols = all_of(var_cols), names_to = "Variable", values_to = "Measurement") %>%
+      select(all_of(c(id_cols, "Variable", lat_col, lon_col, "Measurement"))) %>%
+      group_by(across(all_of(c(id_cols, "Variable")))) %>%
+      tidyr::nest(grouped_data = - group_cols())
+
+    # partition data and set up cluster if using multiple cores
+    if (multiple_cores == TRUE) {
+      # partition data
+      flame_data_partitioned <- flame_data_partitioned %>%
+        multidplyr::partition(cluster)
+      # copy info to cluster
+      multidplyr::cluster_copy(cluster, "calc_moransI")
+      multidplyr::cluster_library(cluster, c("ape", "dplyr", "magrittr"))
+    }
+
+    # do the calculation
+    morans_I0 <- flame_data_partitioned %>%
+      mutate(Value = purrr::map(grouped_data, calc_moransI))
+
+    if (multiple_cores == TRUE) {
+      morans_I0 <- morans_I0 %>%
+        collect()
+    }
+
+    morans_I <- morans_I0 %>%
+      tidyr::unnest(.data$Value) %>%
+      select(-grouped_data) %>%
+      mutate(Stat = "Moran's I")
+
+    results_list = append(results_list, as.data.frame(morans_I))
+  }
+
+  spat_stats_comb <- bind_rows(results_list)
 
   return(spat_stats_comb)
 }

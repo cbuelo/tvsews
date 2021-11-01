@@ -10,6 +10,7 @@ calc_spatial_stats(
   lon_col = "longitude",
   var_cols = c("BGApc_ugL_tau", "ODO_percent_tau", "pH_tau"),
   id_cols = c("Lake", "Year", "DOY"),
+  statistics = c("SD", "moransI"),
   multiple_cores = TRUE
 )
 }
@@ -23,6 +24,8 @@ calc_spatial_stats(
 \item{var_cols}{character vector, column names that hold measurements of different variables}
 
 \item{id_cols}{character vector, columns that identify unique sampling events to separate data into before calculating stats independently on, defaults are "Lake", "Year", and "DOY"}
+
+\item{statistics}{character vector, statistics to run; options are "SD", "moransI", "skew", and "kurt"}
 
 \item{multiple_cores}{TRUE (default) or FALSE, should spatial autocorrelation calculations be run on multiple cores to speed up calculations?}
 }
