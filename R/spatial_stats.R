@@ -82,7 +82,7 @@ calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", 
       mutate(Stat = "SD") %>%
       ungroup()
 
-    results_list = append(results_list,  as.data.frame(spat_SD))
+    results_list[["SD"]] = spat_SD
   }
 
   if("skew" %in% statistics){
@@ -94,7 +94,7 @@ calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", 
       mutate(Stat = "skew") %>%
       ungroup()
 
-    results_list = append(results_list,  as.data.frame(spat_skew))
+    results_list[["skew"]] = spat_skew
   }
 
   if("kurt" %in% statistics){
@@ -106,7 +106,7 @@ calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", 
       mutate(Stat = "kurt") %>%
       ungroup()
 
-    results_list = append(results_list,  as.data.frame(spat_kurt))
+    results_list[["kurt"]] = spat_kurt
   }
 
   if("moransI" %in% statistics){
@@ -152,7 +152,7 @@ calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", 
       select(-grouped_data) %>%
       mutate(Stat = "Moran's I")
 
-    results_list = append(results_list, as.data.frame(morans_I))
+    results_list[["moransI"]] = morans_I
   }
 
   spat_stats_comb <- bind_rows(results_list)
