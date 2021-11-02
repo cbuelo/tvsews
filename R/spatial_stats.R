@@ -101,7 +101,7 @@ calc_spatial_stats <- function(spatial_data = flame_data, lat_col = "latitude", 
     spat_kurt <- spatial_data %>%
       group_by(across(all_of(id_cols))) %>%
       select(all_of(var_cols)) %>%
-      summarise_all(moments::skewness, na.rm = TRUE) %>%
+      summarise_all(moments::kurtosis, na.rm = TRUE) %>%
       tidyr::pivot_longer(cols = all_of(var_cols), names_to = "Variable", values_to = "Value") %>%
       mutate(Stat = "kurt") %>%
       ungroup()
