@@ -188,6 +188,73 @@ SD_sd <- function(x, detrend = FALSE, prop_req = 0.99) {
   return(sd.sd)
 }
 
+#' Calculate the skewness of values with optional (linear) detrending, and perform check that there's enough data
+#'
+#' @param x numeric
+#' @param detrend TRUE or FALSE, default = FALSE
+#' @param prop_req numeric value between 0 and 1, default = 0.99
+#'
+#' @return numeric
+#' @export
+#'
+#' @examples
+#' y <- rnorm(10)
+#' Skewness(y)
+#' Skewness(y, detrend = TRUE)
+#' y[1] <- NA
+#' Skewness(y)
+#' Skewness(y, prop_req = 0.5)
+Skewness <- function(x, detrend = FALSE, prop_req = 0.99) {
+  N <- sum(!is.na(x))
+  if ((N / length(x)) < prop_req) {
+    warning("Warning: more than threshold of rolling window is NA, returning NA")
+    Mean <- NA
+  } else {
+    if (detrend == TRUE) {
+      x_t <- 1:length(x)
+      lm_x <- stats::lm(x ~ x_t, na.action = "na.exclude")
+      xd <- stats::residuals(lm_x)
+    } else {
+      xd <- x
+    }
+    Skewness <- moments::skewness(xd, na.rm = TRUE)
+  }
+  return(Skewness)
+}
+
+#' Calculate the kurtosis of values with optional (linear) detrending, and perform check that there's enough data
+#'
+#' @param x numeric
+#' @param detrend TRUE or FALSE, default = FALSE
+#' @param prop_req numeric value between 0 and 1, default = 0.99
+#'
+#' @return numeric
+#' @export
+#'
+#' @examples
+#' y <- rnorm(10)
+#' Kurtosis(y)
+#' Kurtosis(y, detrend = TRUE)
+#' y[1] <- NA
+#' Kurtosis(y)
+#' Kurtosis(y, prop_req = 0.5)
+Kurtosis <- function(x, detrend = FALSE, prop_req = 0.99) {
+  N <- sum(!is.na(x))
+  if ((N / length(x)) < prop_req) {
+    warning("Warning: more than threshold of rolling window is NA, returning NA")
+    Mean <- NA
+  } else {
+    if (detrend == TRUE) {
+      x_t <- 1:length(x)
+      lm_x <- stats::lm(x ~ x_t, na.action = "na.exclude")
+      xd <- stats::residuals(lm_x)
+    } else {
+      xd <- x
+    }
+    Kurtosis <- moments::kurtosis(xd, na.rm = TRUE)
+  }
+  return(Kurtosis)
+}
 
 #' Calculate rolling window statistics
 #'
