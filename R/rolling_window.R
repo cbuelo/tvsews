@@ -208,7 +208,7 @@ Skewness <- function(x, detrend = FALSE, prop_req = 0.99) {
   N <- sum(!is.na(x))
   if ((N / length(x)) < prop_req) {
     warning("Warning: more than threshold of rolling window is NA, returning NA")
-    Mean <- NA
+    Skewness <- NA
   } else {
     if (detrend == TRUE) {
       x_t <- 1:length(x)
@@ -242,7 +242,7 @@ Kurtosis <- function(x, detrend = FALSE, prop_req = 0.99) {
   N <- sum(!is.na(x))
   if ((N / length(x)) < prop_req) {
     warning("Warning: more than threshold of rolling window is NA, returning NA")
-    Mean <- NA
+    Kurtosis <- NA
   } else {
     if (detrend == TRUE) {
       x_t <- 1:length(x)
