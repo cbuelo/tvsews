@@ -1,0 +1,477 @@
+---
+title: "TvS-AlgalBloom-EWS"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{TvS-AlgalBloom-EWS}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+Rmarkdown to create all analyses and figures in *Evaluating the performance of temporal and spatial early warning statistics of algal blooms* by CD Buelo, ML Pace, SR Carpenter, EH Stanley, DA Ortiz, DT Ha.
+
+```{r libraries, warning=FALSE, message=FALSE}
+library(devtools)
+# devtools::install_github("cbuelo/tvsews") 
+# or install.packages('your/path/to/tvsews_0.1.0.tar.gz', repos=NULL)
+library(tvsews)
+library(tidyverse)
+library(sf)
+library(viridis)
+library(gridExtra)
+library(cowplot)
+library(grid)
+library(broom)
+library(nlme)
+```
+# Plot state variable time series (Figure 1)
+```{r Figure1, warning=FALSE, echo=TRUE, message=FALSE, fig.width=9, fig.height=9}
+plot_state_vars(
+  time_series = ts_data %>% filter(Year >= 2018),
+  bloom_fert_df = bloom_fert_dates %>% filter(Year >= 2018 & Lake == "R")
+) +
+  guides(linetype= FALSE) +
+  theme(
+    legend.position=c(0.1, 0.93), 
+    legend.background = element_blank(), 
+    legend.key = element_blank(),
+    axis.text=element_text(size=12),
+    axis.title=element_text(size=16),
+    strip.text = element_text(size=16)
+    )
+```
+
+# Plot example spatial maps (Figure 2)
+
+```{r Figure2, warning=FALSE, message=FALSE, echo=TRUE, display=FALSE, fig.width=9, fig.height=9}
+plot_spatial_data(
+  spatial_data = flame_data,
+  samples_to_plot = data.frame(Year = 2019, DOY = c(165, 210, 228), stringsAsFactors = FALSE)
+)
+```
+
+## Run rolling window analyses for current experiment
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# define variables to use
+use_vars = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
+# calculate rolling window statistics
+rw_stats = calc_rolling_stats(ts_data %>% filter(Year >= 2018),
+                              var_cols=use_vars)
+```
+
+# Run QD method for current experiment
+```{r, warnings=FALSE, message=FALSE}
+qd_s = run_qd(rw_stats, var_cols=use_vars, ar1_alarm_rho = 0.95)
+qd_a = format_qd(qd_s, bloom_fert_df = bloom_fert_dates)
+```
+
+# Plot the rolling window time series and QD alarms (Figure 3)
+
+```{r Figure3, warning=FALSE, echo=TRUE, message=FALSE, fig.width=12, fig.height=8}
+f3 = plot_temporal_EWS(rolling_window_stats = rw_stats, 
+               qd_alarms = qd_a, 
+               bloom_fert_df = bloom_fert_dates %>% filter(Year == 2019 & Lake == "R")
+               ) 
+```
+
+# Calculate spatial statistics
+
+```{r, warning=FALSE, message=FALSE}
+spatial_stats <- calc_spatial_stats(
+  spatial_data = flame_data,
+  var_cols = c("BGApc_ugL_tau", "ODO_percent_tau", "pH_tau")
+)
+```
+
+# Plot time series of spatial statistics (Figure 4)
+```{r Figure4, echo=TRUE, warning=FALSE, message=FALSE, fig.width=12, fig.height=8}
+plot_spatial_EWS(spatial_stats, 
+          var_rename_vec = c(`Phyco` = "BGApc_ugL_tau", 
+                             `D.O. sat.` = "ODO_percent_tau", 
+                             pH = "pH_tau"))
+```
+# Calculate rolling window stats and QD alarms for all data
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+rw_stats_all = calc_rolling_stats(ts_data, var_cols=use_vars)
+qd_s_all = invisible(run_qd(rw_stats_all, var_cols=use_vars, ar1_alarm_rho = 0.95))
+qd_a_all = format_qd(qd_s_all, bloom_fert_df = bloom_fert_dates)
+qd_rates_all = calc_alarm_rates(qd_a_all)
+```
+
+# Plot the true and false positive alarm rates (Figure 5)
+
+```{r Figure5, fig.width=10, fig.height=6, echo=TRUE}
+plot_alarm_rates(qd_rates_all, plot_title="")
+```
+
+# Calculate info for table on statistic trends 
+
+## Temporal slope trends
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+rw_slope_0 = rw_stats %>% 
+  filter(Stat %in% c("SD", "Ar1")) %>% 
+  select(Year, DOYtrunc, Stat, Lake, Width, all_of(use_vars)) %>% 
+  pivot_longer(cols=use_vars, names_to="Variable") %>% 
+  mutate(LakeType = ifelse(Lake == "L", "Reference", "Experimental"))
+
+rw_slope = rw_slope_0 %>% 
+  select(-Lake) %>% 
+  pivot_wider(names_from=LakeType, values_from = value) %>% 
+  filter(!is.na(Reference) & !is.na(Experimental))
+
+# combine, filter, and calculate difference
+rw_slope_data = rw_slope %>% 
+  mutate(Stat_Diff = Experimental - Reference)
+
+# add fert and bloom start dates
+rw_slope_data_dates = rw_slope_data %>%  
+  left_join(bloom_fert_dates %>% filter(Year >= 2018 & Lake == "R"), by="Year") %>% 
+  select(-Lake) %>% 
+  mutate(fertStartDOY = ifelse(is.na(fertStartDOY), 367, fertStartDOY)) %>% 
+  mutate(fertEndDOY = ifelse(is.na(fertEndDOY), 368, fertEndDOY)) %>% 
+  mutate(bloomStartDOY = ifelse(is.na(bloomStartDOY), 367, bloomStartDOY))
+
+# classify different time periods based on fert/bloom start dates
+rw_slope_data_dates$TimePeriod = "NA"
+rw_slope_data_dates = rw_slope_data_dates %>% 
+  mutate(TimePeriod = ifelse(
+    rw_slope_data_dates$DOYtrunc < rw_slope_data_dates$fertStartDOY, 
+    "preFert", 
+    TimePeriod))
+rw_slope_data_dates = rw_slope_data_dates %>% 
+  mutate(TimePeriod = ifelse(rw_slope_data_dates$DOYtrunc >= rw_slope_data_dates$fertStartDOY &
+                               rw_slope_data_dates$DOYtrunc < rw_slope_data_dates$bloomStartDOY, 
+         "alarmPeriod",
+         TimePeriod))
+rw_slope_data_dates = rw_slope_data_dates %>% 
+  mutate(TimePeriod = ifelse(rw_slope_data_dates$DOYtrunc >= rw_slope_data_dates$bloomStartDOY, 
+         "postBloom",
+         TimePeriod))
+
+# filter just alarm period after fertilization began but before bloom
+rw_slope_alarmPeriod = rw_slope_data_dates %>% 
+  filter(TimePeriod == "alarmPeriod")
+
+# do Kendall's tau test, just get variables that have p value < 0.05
+rw_slopes_significant = rw_slope_alarmPeriod %>% 
+  group_by(Stat, Variable) %>% 
+  do(DOYfit = tidy(cor.test(.$DOYtrunc, .$Stat_Diff, data = ., method="kendall"))) %>%
+  unnest(DOYfit) %>%
+  # filter(term == "DOYtrunc") %>%
+  filter(Stat %in% c("SD", "Ar1")) %>% 
+  filter(p.value < 0.05)
+
+rw_slopes_significant
+```
+
+## Spatial slope trends
+```{r, warning=FALSE, echo=TRUE, message=FALSE}
+# add the fert and bloom dates to the spatial stats
+spatial_stats_slope_0 = spatial_stats %>% 
+  mutate(LakeType = ifelse(Lake == "L", "Reference", "Experimental"))
+
+spatial_stats_slope = spatial_stats_slope_0 %>% 
+  select(-Lake) %>% 
+  pivot_wider(names_from=LakeType, values_from = Value) %>% 
+  filter(!is.na(Reference) & !is.na(Experimental))
+
+# combine, filter, and calculate difference
+spatial_stats_slope_data = spatial_stats_slope %>% 
+  mutate(Stat_Diff = Experimental - Reference)
+
+# add fert and bloom start dates
+spatial_stats_slope_data_dates = spatial_stats_slope_data %>%  
+  left_join(bloom_fert_dates %>% filter(Year >= 2018 & Lake == "R"), by="Year") %>% 
+  select(-Lake) %>% 
+  mutate(fertStartDOY = ifelse(is.na(fertStartDOY), 367, fertStartDOY)) %>% 
+  mutate(fertEndDOY = ifelse(is.na(fertEndDOY), 368, fertEndDOY)) %>% 
+  mutate(bloomStartDOY = ifelse(is.na(bloomStartDOY), 367, bloomStartDOY))
+
+# classify different time periods based on fert/bloom start dates
+spatial_stats_slope_data_dates$TimePeriod = "NA"
+spatial_stats_slope_data_dates = spatial_stats_slope_data_dates %>% 
+  mutate(TimePeriod = ifelse(
+    spatial_stats_slope_data_dates$DOY < spatial_stats_slope_data_dates$fertStartDOY, 
+    "preFert",
+    TimePeriod))
+spatial_stats_slope_data_dates = spatial_stats_slope_data_dates %>% 
+  mutate(TimePeriod = ifelse(spatial_stats_slope_data_dates$DOY >= spatial_stats_slope_data_dates$fertStartDOY &
+                               spatial_stats_slope_data_dates$DOY < spatial_stats_slope_data_dates$bloomStartDOY, 
+         "alarmPeriod",
+         TimePeriod))
+spatial_stats_slope_data_dates = spatial_stats_slope_data_dates %>% 
+  mutate(TimePeriod = ifelse(spatial_stats_slope_data_dates$DOY >= spatial_stats_slope_data_dates$bloomStartDOY, 
+         "postBloom",
+         TimePeriod))
+
+spatial_slope_results = spatial_stats_slope_data_dates %>% 
+  filter(TimePeriod == "alarmPeriod") %>%
+  group_by(Stat, Variable) %>% 
+  do(DOYfit = tidy(cor.test(.$DOY, .$Stat_Diff, data = ., method="kendall"))) %>% 
+  unnest(DOYfit) %>% 
+  arrange(Stat, Variable) %>% 
+  filter(p.value < 0.05)
+
+spatial_slope_results
+```
+## Paired t-test if mean difference between lakes during alarm period is different from 0
+```{r}
+spatial_means_results = spatial_stats_slope_data_dates %>%
+  filter(TimePeriod == "alarmPeriod") %>%
+  group_by(Stat, Variable) %>% 
+  do(tidy(t.test(x=.$Experimental, y=.$Reference, paired=TRUE))) %>% 
+  filter(p.value < 0.05)
+
+spatial_means_results
+```
+
+# Response to reviews: use mixed model to account for non-independence
+```{r}
+# look at difference between lakes for spatial EWS
+hold = spatial_stats_slope_data_dates %>%
+  # run for all of BGApc_ugL_tau, ODO_percent_tau, and pH_tau, and Stat = SD, Moran's I
+  filter(TimePeriod == "alarmPeriod" & Variable == "pH_tau" & Stat == "Moran's I") %>% 
+  select(DOY, Stat_Diff, Stat, Variable) %>% 
+  arrange(DOY) %>% 
+  mutate(sample = row_number())
+
+hold_gls = gls(Stat_Diff ~ 1, data=hold, correlation = corAR1(form=~sample))
+summary(hold_gls)
+```
+
+
+
+# Response to Reviews: add skewness and kurtosis
+```{r, warning=FALSE}
+# calculate RW and spatial skewness and kurtosis
+use_vars = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
+ts_sk = calc_rolling_stats(ts_data %>% filter(Year >= 2018),
+                           var_cols=use_vars,
+                           statistics = c("Skewness", "Kurtosis"))
+
+bloom_dates <- bloom_fert_dates %>%
+  tidyr::pivot_longer(cols = c("fertStartDOY", "fertEndDOY", "bloomStartDOY"), 
+                      names_to = "Start Of", 
+                      values_to = "DOYtrunc") %>%
+  mutate(
+    `Start Of` = ifelse(`Start Of` == "fertStartDOY", "nutrients", `Start Of`),
+    `Start Of` = ifelse(`Start Of` == "bloomStartDOY", "bloom", `Start Of`)
+  ) %>%
+  filter(`Start Of` %in% c("nutrients", "bloom") & Lake == "R" & Year >= 2018)
+
+sp_sk = calc_spatial_stats(statistics = c("skew", "kurt"))
+```
+## plot temporal skew and kurt
+```{r, fig.width=12, fig.height=6}
+# plot the time series
+ts_long = ts_sk %>%
+  pivot_longer(cols = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")) %>%
+  mutate(name = factor(name, levels = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH"),
+                       labels = c("Chl-a", "Phyco", "D.O. Sat", "pH"), ordered = T))
+
+ts_skewplot = ggplot(ts_long %>% filter(Stat == "Skewness"),
+                     aes(x=DOYtrunc, y=value, color=Lake)) +
+  geom_line(size=1.5) +
+  facet_grid(rows=vars(name), cols=vars(Year), scales="free_y") +
+  theme_bw() +
+  scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide="none") +
+  geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
+  scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = FALSE) +
+  ggtitle("Skewness") +
+  theme(plot.title = element_text(hjust=0.5)) +
+  labs(x="Day Of Year")
+
+ts_kurtplot = ggplot(ts_long %>% filter(Stat == "Kurtosis"),
+                     aes(x=DOYtrunc, y=value, color=Lake)) +
+  geom_line(size=1.5) +
+  facet_grid(rows=vars(name), cols=vars(Year), scales="free_y") +
+  theme_bw() +
+  scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = "none") +
+  geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
+  scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = FALSE) +
+  ggtitle("Kurtosis") +
+  theme(plot.title = element_text(hjust=0.5)) +
+  labs(x="Day Of Year")
+
+ts_plot = gridExtra::grid.arrange(ts_skewplot, ts_kurtplot, nrow=1)
+# ggsave("~/Documents/Cascade/SpatialSquealAnalysis/Figures/RW_skewness_kurtosis_v1.png", ts_plot, )
+```
+
+## plot spatial skew and kurt
+```{r, fig.width=12, fig.height=6}
+sp_skewplot = sp_sk %>%
+  mutate(Variable = factor(Variable, 
+                           levels = c("BGApc_ugL_tau", "ODO_percent_tau", "pH_tau"), 
+                           labels = c("Phyco", "D.O. Sat", "pH"), ordered = T)) %>%
+  filter(Stat == "skew") %>%
+  ggplot(aes(x=DOY, y=Value, color=Lake)) +
+  geom_line(size=1.5) +
+  facet_grid(rows=vars(Variable), cols=vars(Year), scales="free_y") +
+  theme_bw() +
+  scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide="none") +
+  geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
+  scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = FALSE) +
+  ggtitle("Skewness") +
+  theme(plot.title = element_text(hjust=0.5)) +
+  labs(x="Day Of Year")
+
+sp_kurtplot = sp_sk %>%
+  mutate(Variable = factor(Variable, 
+                           levels = c("BGApc_ugL_tau", "ODO_percent_tau", "pH_tau"), 
+                           labels = c("Phyco", "D.O. Sat", "pH"), ordered = T)) %>%
+  filter(Stat == "kurt") %>%
+  ggplot(aes(x=DOY, y=Value, color=Lake)) +
+  geom_line(size=1.5) +
+  facet_grid(rows=vars(Variable), cols=vars(Year), scales="free_y") +
+  theme_bw() +
+  scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide="none") +
+  geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
+  scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = FALSE) +
+  ggtitle("Kurtosis") +
+  theme(plot.title = element_text(hjust=0.5)) +
+  labs(x="Day Of Year")
+
+sp_plot = gridExtra::grid.arrange(sp_skewplot, sp_kurtplot, nrow=1)
+```
+
+## time series slopes and mean diffs setup
+```{r}
+# calculate slopes and differences between lakes
+rw_slope_0 = ts_sk %>% 
+  select(Year, DOYtrunc, Stat, Lake, Width, all_of(use_vars)) %>% 
+  pivot_longer(cols=use_vars, names_to="Variable") %>% 
+  mutate(LakeType = ifelse(Lake == "L", "Reference", "Experimental"))
+
+rw_slope = rw_slope_0 %>% 
+  select(-Lake) %>% 
+  pivot_wider(names_from=LakeType, values_from = value) %>% 
+  filter(!is.na(Reference) & !is.na(Experimental))
+
+# combine, filter, and calculate difference
+rw_slope_data = rw_slope %>% 
+  mutate(Stat_Diff = Experimental - Reference)
+
+# add fert and bloom start dates
+rw_slope_data_dates = rw_slope_data %>%  
+  left_join(bloom_fert_dates %>% filter(Year >= 2018 & Lake == "R"), by="Year") %>% 
+  select(-Lake) %>% 
+  mutate(fertStartDOY = ifelse(is.na(fertStartDOY), 367, fertStartDOY)) %>% 
+  mutate(fertEndDOY = ifelse(is.na(fertEndDOY), 368, fertEndDOY)) %>% 
+  mutate(bloomStartDOY = ifelse(is.na(bloomStartDOY), 367, bloomStartDOY))
+
+# classify different time periods based on fert/bloom start dates
+rw_slope_data_dates$TimePeriod = "NA"
+rw_slope_data_dates = rw_slope_data_dates %>% 
+  mutate(TimePeriod = ifelse(
+    rw_slope_data_dates$DOYtrunc < rw_slope_data_dates$fertStartDOY, 
+    "preFert", 
+    TimePeriod))
+rw_slope_data_dates = rw_slope_data_dates %>% 
+  mutate(TimePeriod = ifelse(rw_slope_data_dates$DOYtrunc >= rw_slope_data_dates$fertStartDOY &
+                               rw_slope_data_dates$DOYtrunc < rw_slope_data_dates$bloomStartDOY, 
+                             "alarmPeriod",
+                             TimePeriod))
+rw_slope_data_dates = rw_slope_data_dates %>% 
+  mutate(TimePeriod = ifelse(rw_slope_data_dates$DOYtrunc >= rw_slope_data_dates$bloomStartDOY, 
+                             "postBloom",
+                             TimePeriod))
+```
+
+## significant slopes
+```{r}
+# filter just alarm period after fertilization began but before bloom
+rw_slope_alarmPeriod = rw_slope_data_dates %>% 
+  filter(TimePeriod == "alarmPeriod")
+
+# do Kendall's tau test, just get variables that have p value < 0.05
+rw_slopes_significant = rw_slope_alarmPeriod %>% 
+  group_by(Stat, Variable) %>% 
+  do(DOYfit = tidy(cor.test(.$DOYtrunc, .$Stat_Diff, data = ., method="kendall"))) %>%
+  unnest(DOYfit) %>%
+  filter(p.value < 0.05)
+
+rw_slopes_significant
+```
+
+## significant spatial skew and kurtosis slopes
+```{r}
+spatial_stats_slope_0 = sp_sk %>% 
+  mutate(LakeType = ifelse(Lake == "L", "Reference", "Experimental"))
+
+spatial_stats_slope = spatial_stats_slope_0 %>% 
+  select(-Lake) %>% 
+  pivot_wider(names_from=LakeType, values_from = Value) %>% 
+  filter(!is.na(Reference) & !is.na(Experimental))
+
+# combine, filter, and calculate difference
+spatial_stats_slope_data = spatial_stats_slope %>% 
+  mutate(Stat_Diff = Experimental - Reference)
+
+# add fert and bloom start dates
+spatial_stats_slope_data_dates = spatial_stats_slope_data %>%  
+  left_join(bloom_fert_dates %>% filter(Year >= 2018 & Lake == "R"), by="Year") %>% 
+  select(-Lake) %>% 
+  mutate(fertStartDOY = ifelse(is.na(fertStartDOY), 367, fertStartDOY)) %>% 
+  mutate(fertEndDOY = ifelse(is.na(fertEndDOY), 368, fertEndDOY)) %>% 
+  mutate(bloomStartDOY = ifelse(is.na(bloomStartDOY), 367, bloomStartDOY))
+
+# classify different time periods based on fert/bloom start dates
+spatial_stats_slope_data_dates$TimePeriod = "NA"
+spatial_stats_slope_data_dates = spatial_stats_slope_data_dates %>% 
+  mutate(TimePeriod = ifelse(
+    spatial_stats_slope_data_dates$DOY < spatial_stats_slope_data_dates$fertStartDOY, 
+    "preFert", 
+    TimePeriod))
+spatial_stats_slope_data_dates = spatial_stats_slope_data_dates %>% 
+  mutate(TimePeriod = ifelse(
+    spatial_stats_slope_data_dates$DOY >= spatial_stats_slope_data_dates$fertStartDOY &
+      spatial_stats_slope_data_dates$DOY < spatial_stats_slope_data_dates$bloomStartDOY, 
+                             "alarmPeriod",
+                             TimePeriod))
+spatial_stats_slope_data_dates = spatial_stats_slope_data_dates %>% 
+  mutate(TimePeriod = ifelse(
+    spatial_stats_slope_data_dates$DOY >= spatial_stats_slope_data_dates$bloomStartDOY, 
+                             "postBloom",
+                             TimePeriod))
+
+spatial_slope_results = spatial_stats_slope_data_dates %>% 
+  filter(TimePeriod == "alarmPeriod") %>%
+  group_by(Stat, Variable) %>% 
+  do(DOYfit = tidy(cor.test(.$DOY, .$Stat_Diff, data = ., method="kendall"))) %>% 
+  unnest(DOYfit) %>% 
+  arrange(Stat, Variable) %>% 
+  filter(p.value < 0.05)
+
+spatial_slope_results
+```
+
+
+```{r}
+# look at difference between lakes for spatial EWS
+hold = spatial_stats_slope_data_dates %>% 
+  # run for all of BGApc_ugL_tau, ODO_percent_tau, and pH_tau, and Stat = kurt, skew
+  filter(TimePeriod == "alarmPeriod" & Variable == "pH_tau" & Stat == "kurt") %>%
+  select(DOY, Stat_Diff) %>% 
+  arrange(DOY) %>% 
+  mutate(sample = row_number())
+
+hold_gls = gls(Stat_Diff ~ 1, data=hold, correlation = corAR1(form=~sample))
+summary(hold_gls)
+
+# Significant: 
+
+## ODO skew: p = 0, difference is NEGATIVE
+## ODO kurt: p = 2e-4, difference is POSITIVE
+
+## pH skewness: p = 0, difference is NEGATIVE
+## pH kurtosis: p = 0.021, difference is POSITIVE
+
+```

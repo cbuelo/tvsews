@@ -30,3 +30,7 @@ Imports:
     cowplot,
     grid,
     shiny
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr
