@@ -32,5 +32,9 @@ Imports:
     shiny
 Suggests: 
     rmarkdown,
-    knitr
+    knitr,
+    broom,
+    devtools,
+    nlme,
+    tidyverse
 VignetteBuilder: knitr
