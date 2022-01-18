@@ -284,7 +284,7 @@ ts_skewplot = ggplot(ts_long %>% filter(Stat == "Skewness"),
   theme_bw() +
   scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide="none") +
   geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
-  scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = FALSE) +
+  scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = "none") +
   ggtitle("Skewness") +
   theme(plot.title = element_text(hjust=0.5)) +
   labs(x="Day Of Year")
@@ -296,7 +296,7 @@ ts_kurtplot = ggplot(ts_long %>% filter(Stat == "Kurtosis"),
   theme_bw() +
   scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = "none") +
   geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
-  scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = FALSE) +
+  scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = "none") +
   ggtitle("Kurtosis") +
   theme(plot.title = element_text(hjust=0.5)) +
   labs(x="Day Of Year")
@@ -318,7 +318,7 @@ sp_skewplot = sp_sk %>%
   theme_bw() +
   scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide="none") +
   geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
-  scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = FALSE) +
+  scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = "none") +
   ggtitle("Skewness") +
   theme(plot.title = element_text(hjust=0.5)) +
   labs(x="Day Of Year")
@@ -334,7 +334,7 @@ sp_kurtplot = sp_sk %>%
   theme_bw() +
   scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide="none") +
   geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
-  scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = FALSE) +
+  scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = "none") +
   ggtitle("Kurtosis") +
   theme(plot.title = element_text(hjust=0.5)) +
   labs(x="Day Of Year")

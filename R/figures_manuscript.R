@@ -214,7 +214,7 @@ plot_temporal_EWS <- function(rolling_window_stats, qd_alarms, bloom_fert_df = b
 
   if (all(unique(rw_stats_long$Lake) %in% c("R", "L"))) {
     sd_plot <- sd_plot +
-      scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = FALSE)
+      scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = "none")
   }
 
   sd_plot <- sd_plot +
@@ -240,7 +240,7 @@ plot_temporal_EWS <- function(rolling_window_stats, qd_alarms, bloom_fert_df = b
     ) +
     # add fert/bloom lines
     geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
-    scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = FALSE)
+    scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = "none")
 
   ## make AR1 plot
   # plot rw stats
@@ -253,7 +253,7 @@ plot_temporal_EWS <- function(rolling_window_stats, qd_alarms, bloom_fert_df = b
 
   if (all(unique(rw_stats_long$Lake) %in% c("R", "L"))) {
     ar1_plot <- ar1_plot +
-      scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = FALSE)
+      scale_color_manual(values = c("R" = "firebrick3", "L" = "royalblue3"), guide = "none")
   }
   ar1_plot <- ar1_plot +
     labs(x = "", y = "") +
@@ -265,7 +265,7 @@ plot_temporal_EWS <- function(rolling_window_stats, qd_alarms, bloom_fert_df = b
       size = 3,
       color = "black"
     ) +
-    scale_fill_manual(values = c("False" = "#FFE77AFF", "True" = "#5F9260FF", "Late" = "darkgrey"), guide = FALSE) +
+    scale_fill_manual(values = c("False" = "#FFE77AFF", "True" = "#5F9260FF", "Late" = "darkgrey"), guide = "none") +
     ggtitle("AR(1)") +
     theme(
       legend.background = element_blank(),
@@ -278,7 +278,7 @@ plot_temporal_EWS <- function(rolling_window_stats, qd_alarms, bloom_fert_df = b
     ) +
     # add fert/bloom lines
     geom_vline(data = bloom_dates, aes(xintercept = DOYtrunc, linetype = `Start Of`)) +
-    scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = FALSE)
+    scale_linetype_manual(breaks = c("nutrients", "bloom"), values = c("dashed", "solid"), guide = "none")
 
 
   ## combine

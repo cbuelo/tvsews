@@ -9,16 +9,25 @@
 tvsews is an R package that provides code and data for a whole-lake
 fertilization experiment that caused an algal bloom in order to compared
 the performance of early warning statistics (EWS) in temporal and
-spatial data. It is currently under development.
+spatial data.
 
 ## Installation
 
-You can install the development version from
-[GitHub](https://github.com/) with:
+You can install *tvsews* from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
 devtools::install_github("cbuelo/tvsews")
+```
+
+To install the package and build a vignette that carries out analyses
+and displays results for an accepted manuscript (note this will take a
+few minutes to run):
+
+``` r
+devtools::install_github("cbuelo/tvsews", build_vignettes = T)
+library(tvsews)
+vignette("TvS-AlgalBloom-EWS")
 ```
 
 ## Example
@@ -136,4 +145,4 @@ spatial_results_plot <- plot_spatial_EWS(spatial_stats_pbfp)
 
 <img src="man/figures/README-unnamed-chunk-7-1.png" width="100%" />
 
-(`devtools::build_readme()`to render)
+(Note to self: `devtools::build_readme()`to render)
