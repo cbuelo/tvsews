@@ -233,7 +233,7 @@ spatial_means_results = spatial_stats_slope_data_dates %>%
 spatial_means_results
 ```
 
-# Response to reviews: use mixed model to account for non-independence
+# Mixed model to account for non-independence
 ```{r}
 # look at difference between lakes for spatial EWS
 hold = spatial_stats_slope_data_dates %>%
@@ -249,7 +249,7 @@ summary(hold_gls)
 
 
 
-# Response to Reviews: add skewness and kurtosis
+# Skewness and kurtosis
 ```{r, warning=FALSE}
 # calculate RW and spatial skewness and kurtosis
 use_vars = c("Manual_Chl", "BGA_HYLB", "DO_Sat", "pH")
